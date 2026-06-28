@@ -1,10 +1,29 @@
 # jeremy — Spec
 
-A single-player, text-based adventure game. The player travels between
-locations, gathers and crafts materials, fights enemies, and gains XP.
-All interaction is menu-driven: the game prints numbered choices and the
-player types a number. There is no win condition — new and harder content
+A single-player, text-based adventure game available in **two versions**:
+- **Text-based CLI** (Python) — the original command-line interface
+- **Web-based GUI** (HTML, CSS, and JavaScript) — visual 2D top-down exploration and combat
+
+The player travels between locations, gathers and crafts materials, fights enemies, and gains XP.
+All interaction is menu-driven. There is no win condition — new and harder content
 unlocks as the player levels up.
+
+## Implementations
+
+### Python CLI (Original)
+- Pure Python with JSON data files
+- Text menu interface with numbered choices
+- Run with `python3 main.py` from the repository root
+- All core logic: combat, leveling, crafting, abilities, item levels
+
+### Browser GUI (Visual)
+- Dependency-free JavaScript port of the core Python game systems
+- Visual 2D top-down overworld based on the original Jeremy concept art
+- Turn-based combat with distance, equipment abilities, and animations
+- Shared JSON content from `data/` for world, enemies, items, recipes, and dungeons
+- LocalStorage auto-save/load
+- Number keys 1–9 select visible actions; Escape closes menus
+- Run `python3 -m http.server 8000`, then open `/visual%20game/` in a browser
 
 ---
 
@@ -400,7 +419,40 @@ even if the player quits.
 
 ---
 
-## 13. Parked / future ideas
+## 13. Browser UI
+
+The browser version provides a responsive 1024×768 visual interface based on
+the original Jeremy overworld artwork.
+
+**Exploration:**
+- All seven locations appear as paths on the overworld map
+- **Move** opens the travel menu and animates Jeremy to the chosen location
+- Locked locations remain visible with their required level
+- Location-specific Gather, Fight, and Dungeon actions appear automatically
+
+**Menus:**
+- **Stats** — HP, effective PWR, XP, level, equipment, discoveries, and journeys
+- **Bag** — interactive inventory with item quantities and descriptions
+- **Gear** — current weapon/armor and equippable items from the bag
+- **Craft** — recipes, owned/required materials, and affordability
+- **Use item** — available consumables and their percentage-based healing
+- Number keys 1–9 activate visible actions; Escape closes an open menu
+
+**Combat:**
+- Separate visual combat scene with player/enemy HP bars
+- CLOSE/FAR distance indicator and weapon distance modifiers
+- Attack, defend, use item, rush in/move back, and flee actions
+- Status abilities, armor abilities, enemy speed, drops, XP, and level-ups
+- Sequential dungeon floors followed by clear XP and item rewards
+
+**Save/Load:**
+- Actions save automatically to browser LocalStorage
+- The Save action also writes the current state explicitly
+- Browser saves are separate from the Python CLI save file
+
+---
+
+## 14. Parked / future ideas
 
 - Additional biome tiers beyond Shadow Ruins (ice tundra, void realm, …).
 - Hunger / stamina layer affecting gather yield or combat performance.
@@ -410,3 +462,4 @@ even if the player quits.
 - Player speed stat and multi-attack moves for the player.
 - Boss enemies at the end of each dungeon (currently dungeons end on a regular enemy).
 - Difficulty settings that adjust XP thresholds or enemy scaling ratios.
+- **Web version enhancements:** additional map art, enemy sprites, richer sound effects, and networked multiplayer

@@ -78,13 +78,87 @@ def show_stats(state: GameState) -> None:
     print(f"  Armor:  {armor}")
 
 
+def _show_item_details(state: GameState, item_id: str) -> None:
+    """Display full details of an item."""
+    item = state.items.get(item_id, {})
+    name = _item_name(state, item_id)
+    item_type = item.get("type", "unknown")
+
+    print(f"\n-- {name} --")
+    print(f"Type: {item_type}")
+
+    if item_type == "material":
+        xp_val = item.get("xp_value")
+        if xp_val:
+            print(f"Smelts to {xp_val} XP")
+
+    elif item_type == "consumable":
+        effect = item.get("effect", {})
+        ratio = effect.get("ratio", 0)
+        print(f"Restores {int(ratio * 100)}% HP")
+
+    elif item_type in ("craftable", "unique"):
+        equip = item.get("equip", {})
+        slot = equip.get("slot", "unknown")
+        print(f"Slot: {slot}")
+
+        if slot == "weapon":
+            wtype = equip.get("weapon_type", "melee")
+            print(f"Type: {wtype}")
+            if equip.get("level_scaled"):
+                lvl = state.player.item_levels.get(item_id, 1)
+                print(f"Level: {lvl} (+{lvl} PWR)")
+            else:
+                pwr_bonus = equip.get("pwr_bonus", 0)
+                print(f"+{pwr_bonus} PWR")
+
+        elif slot == "armor":
+            if equip.get("level_scaled"):
+                lvl = state.player.item_levels.get(item_id, 1)
+                print(f"Level: {lvl} (+{lvl * 4} max HP)")
+            else:
+                hp_bonus = equip.get("max_hp_bonus", 0)
+                print(f"+{hp_bonus} max HP")
+
+        # Show ability if present
+        ability = equip.get("ability", {})
+        if ability and ability.get("kind"):
+            ability_str = f"Ability: {ability['kind']}"
+            if ability.get("ratio"):
+                ability_str += f" ({int(ability['ratio'] * 100)}%)"
+            if ability.get("amount"):
+                ability_str += f" ({ability['amount']})"
+            if ability.get("damage"):
+                ability_str += f" ({ability['damage']} dmg)"
+            if ability.get("ticks"):
+                ability_str += f" ({ability['ticks']} rounds)"
+            if ability.get("max_bonus"):
+                ability_str += f" (max +{int(ability['max_bonus'] * 100)}%)"
+            if ability.get("threshold"):
+                ability_str += f" (<{int(ability['threshold'] * 100)}% HP)"
+            if ability.get("bonus_mult"):
+                ability_str += f" (×{ability['bonus_mult']})"
+            print(ability_str)
+
+
 def show_inventory(state: GameState) -> None:
-    print("\n-- Inventory --")
     if not state.player.bag:
+        print("\n-- Inventory --")
         print("  (empty)")
         return
-    for item_id, n in state.player.bag.items():
-        print(f"  {_item_display(state, item_id)}: {n}")
+
+    items_list = list(state.player.bag.items())
+
+    while True:
+        labels = [f"{_item_display(state, item_id)}: {n}" for item_id, n in items_list]
+        labels.append("Back")
+
+        choice = engine.menu("-- Inventory -- (select item for details)", labels)
+        if choice == len(items_list):
+            return
+
+        item_id = items_list[choice][0]
+        _show_item_details(state, item_id)
 
 
 # --- travel ----------------------------------------------------------------
@@ -307,7 +381,14 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
 
         if a_ability.get("kind") == "regen":
             cap = effective_max_hp(state.player, state.items)
-            gained = min(a_ability["amount"], cap - state.player.hp)
+            base_amount = a_ability["amount"]
+            equip = state.items.get(state.player.armor, {}).get("equip", {})
+            if equip.get("level_scaled"):
+                lvl = state.player.item_levels.get(state.player.armor, 1)
+                amount = base_amount * lvl
+            else:
+                amount = base_amount
+            gained = min(amount, cap - state.player.hp)
             if gained > 0:
                 state.player.hp += gained
                 print(f"You regenerate {gained} HP (HP {state.player.hp}/{cap}).")
@@ -361,11 +442,26 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
                 dmg_mult *= 1.2
                 print("(Marked! +20%)")
             if kind == "berserker":
+                base_bonus = w_ability["max_bonus"]
+                equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.weapon, 1)
+                    max_bonus = base_bonus * lvl
+                else:
+                    max_bonus = base_bonus
                 missing = 1 - state.player.hp / max(1, eff_max_hp)
-                dmg_mult *= 1 + missing * w_ability["max_bonus"]
-            if kind == "execute" and enemy["hp"] < enemy["max_hp"] * w_ability["threshold"]:
-                dmg_mult *= w_ability["bonus"]
-                print("(Execute!)")
+                dmg_mult *= 1 + missing * max_bonus
+            if kind == "execute":
+                base_threshold = w_ability["threshold"]
+                equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.weapon, 1)
+                    threshold = max(0.01, base_threshold - (lvl - 1) * 0.01)
+                else:
+                    threshold = base_threshold
+                if enemy["hp"] < enemy["max_hp"] * threshold:
+                    dmg_mult *= w_ability["bonus"]
+                    print("(Execute!)")
 
             dmg = combat.player_attacks(state.player, enemy, state.items, dmg_mult)
             print(f"You hit the {enemy['name']} for {dmg}.")
@@ -393,8 +489,15 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
                         print(f"The {enemy['name']} is marked!")
                 elif kind == "poison":
                     if not enemy.get("_poisoned") or wtype == "magic":
-                        enemy["_poisoned"] = {"dmg": w_ability["damage"], "ticks": w_ability["ticks"]}
-                        print(f"The {enemy['name']} is poisoned! ({w_ability['damage']} dmg, {w_ability['ticks']} ticks)")
+                        base_dmg = w_ability["damage"]
+                        equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                        if equip.get("level_scaled"):
+                            lvl = state.player.item_levels.get(state.player.weapon, 1)
+                            poison_dmg = base_dmg + lvl - 1
+                        else:
+                            poison_dmg = base_dmg
+                        enemy["_poisoned"] = {"dmg": poison_dmg, "ticks": w_ability["ticks"]}
+                        print(f"The {enemy['name']} is poisoned! ({poison_dmg} dmg, {w_ability['ticks']} ticks)")
 
             if enemy["hp"] <= 0:
                 return _victory(state, enemy)
@@ -422,7 +525,14 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
         taken = combat.enemy_attacks(state.player, enemy, guarded=guarded)
 
         if taken > 0 and a_ability.get("kind") == "shield":
-            reduction = min(a_ability["amount"], max(0, taken - 1))
+            base_amount = a_ability["amount"]
+            equip = state.items.get(state.player.armor, {}).get("equip", {})
+            if equip.get("level_scaled"):
+                lvl = state.player.item_levels.get(state.player.armor, 1)
+                shield_amount = base_amount * lvl
+            else:
+                shield_amount = base_amount
+            reduction = min(shield_amount, max(0, taken - 1))
             if reduction > 0:
                 state.player.hp += reduction
                 taken -= reduction

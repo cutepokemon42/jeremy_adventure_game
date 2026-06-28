@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101e22">
+  <title>Jeremy — Visual Adventure</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="game" class="game-shell" aria-label="Jeremy visual adventure game">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Current location</p>
+        <h1 id="location-name">Spawn</h1>
+      </div>
+      <div class="stat-strip" aria-label="Player statistics">
+        <span class="stat hp"><i>♥</i> <b id="hp-stat">20 / 20</b></span>
+        <span class="stat pwr"><i>✦</i> <b id="pwr-stat">3</b></span>
+        <span class="stat level"><i>◆</i> LV <b id="level-stat">1</b></span>
+        <span class="stat xp">XP <b id="xp-stat">0 / 10</b></span>
+      </div>
+    </header>
+
+    <section class="playfield">
+      <div id="world-map" class="world-map" role="img" aria-label="Forest crossroads map">
+        <div class="map-shade"></div>
+        <div class="static-art-mask" aria-hidden="true"><i></i><i></i><i></i></div>
+        <button id="player-marker" class="player-marker" aria-label="Jeremy's current position">
+          <span class="marker-shadow"></span>
+          <span class="marker-body"><i></i></span>
+        </button>
+        <div id="map-nodes" class="map-nodes" aria-hidden="true"></div>
+        <div class="location-card">
+          <span id="location-kicker">Safe camp</span>
+          <strong id="location-card-name">SPAWN</strong>
+        </div>
+      </div>
+
+      <aside class="command-panel" aria-label="Actions">
+        <div class="panel-heading">
+          <span>Choose an action</span>
+          <kbd>1–9</kbd>
+        </div>
+        <div id="action-list" class="action-list"></div>
+      </aside>
+    </section>
+
+    <section class="story-panel" aria-live="polite">
+      <div class="portrait" aria-hidden="true"><span>J</span></div>
+      <div>
+        <p class="eyebrow">Adventure log</p>
+        <p id="message">You wake beside a quiet campfire. The crossroads are waiting.</p>
+      </div>
+      <button id="sound-toggle" class="icon-button" aria-label="Toggle sound" title="Toggle sound">♪</button>
+    </section>
+  </main>
+
+  <div id="modal" class="modal" hidden>
+    <div class="modal-backdrop" data-close-modal></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <header>
+        <div>
+          <p id="modal-kicker" class="eyebrow">Menu</p>
+          <h2 id="modal-title">Inventory</h2>
+        </div>
+        <button class="close-button" data-close-modal aria-label="Close">×</button>
+      </header>
+      <div id="modal-content" class="modal-content"></div>
+    </section>
+  </div>
+
+  <div id="combat" class="combat" hidden>
+    <div class="combat-backdrop"></div>
+    <section class="combat-stage" role="dialog" aria-modal="true" aria-labelledby="enemy-name">
+      <header class="combat-header">
+        <div>
+          <p class="eyebrow">Encounter · <span id="combat-distance">CLOSE</span></p>
+          <h2 id="enemy-name">Wild Boar</h2>
+        </div>
+        <button id="combat-flee-top" class="text-button">Flee</button>
+      </header>
+      <div class="combat-arena">
+        <article class="fighter enemy-card">
+          <div id="enemy-sprite" class="enemy-sprite" aria-hidden="true">🐗</div>
+          <div class="health-block">
+            <span>Enemy</span>
+            <div class="health-track"><i id="enemy-health-bar"></i></div>
+            <b id="enemy-hp">8 / 8 HP</b>
+          </div>
+        </article>
+        <div class="versus">VS</div>
+        <article class="fighter hero-card">
+          <div class="hero-sprite" aria-hidden="true"><span></span></div>
+          <div class="health-block">
+            <span>Jeremy</span>
+            <div class="health-track"><i id="hero-health-bar"></i></div>
+            <b id="hero-hp">20 / 20 HP</b>
+          </div>
+        </article>
+      </div>
+      <p id="combat-message" class="combat-message">A wild enemy appears.</p>
+      <div id="combat-actions" class="combat-actions"></div>
+    </section>
+  </div>
+
+  <template id="menu-row-template">
+    <button class="menu-row">
+      <span class="menu-row-icon"></span>
+      <span class="menu-row-copy"><strong></strong><small></small></span>
+      <span class="menu-row-meta"></span>
+    </button>
+  </template>
+
+  <script type="module" src="game.js"></script>
+</body>
+</html>
