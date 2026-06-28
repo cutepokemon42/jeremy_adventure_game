@@ -87,11 +87,11 @@ async function loadJson(path, rootKey) {
 async function boot() {
   try {
     const [world, items, enemies, recipes, dungeons] = await Promise.all([
-      loadJson("../data/world.json", "locations"),
-      loadJson("../data/items.json", "items"),
-      loadJson("../data/enemies.json", "enemies"),
-      loadJson("../data/recipes.json", "recipes"),
-      loadJson("../data/dungeons.json", "dungeons"),
+      loadJson("./data/world.json", "locations"),
+      loadJson("./data/items.json", "items"),
+      loadJson("./data/enemies.json", "enemies"),
+      loadJson("./data/recipes.json", "recipes"),
+      loadJson("./data/dungeons.json", "dungeons"),
     ]);
     content = { world, items, enemies, recipes, dungeons };
     engine = new GameEngine(content, loadSavedState());

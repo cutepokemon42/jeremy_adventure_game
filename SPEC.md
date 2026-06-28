@@ -23,7 +23,7 @@ unlocks as the player levels up.
 - Shared JSON content from `data/` for world, enemies, items, recipes, and dungeons
 - LocalStorage auto-save/load
 - Number keys 1–9 select visible actions; Escape closes menus
-- Run `python3 -m http.server 8000`, then open `/visual%20game/` in a browser
+- Run `python3 -m http.server 8000`, then open `/docs/` in a browser
 
 ---
 

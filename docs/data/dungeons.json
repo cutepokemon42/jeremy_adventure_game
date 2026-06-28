@@ -1,0 +1,39 @@
+{
+  "dungeons": {
+    "jungle_den": {
+      "name": "Bandit Den",
+      "description": "A hidden clearing deep in the jungle. Beasts have made their lair here.",
+      "floors": ["snake", "boar", "boar"],
+      "bonus_xp": 10,
+      "reward": ["jade_fang", "vampire_sword", "vampire_robe"],
+      "difficulty": {"hp_ratio": 0.9, "pwr_ratio": 0.7}
+    },
+    "mine_dungeon": {
+      "name": "Deep Mine Dungeon",
+      "description": "The shaft drops into darkness. Creatures stir below.",
+      "min_level": 2,
+      "floors": ["cave_bat", "cave_bat", "rock_golem"],
+      "bonus_xp": 25,
+      "reward": ["ice_scythe", "crystal_shield", "berserker_axe", "iron_fortress"],
+      "difficulty": {"hp_ratio": 1.3, "pwr_ratio": 0.9}
+    },
+    "molten_core": {
+      "name": "Molten Core",
+      "description": "Deep beneath the volcano, rivers of lava carve through ancient stone.",
+      "min_level": 3,
+      "floors": ["lava_lizard", "fire_drake", "fire_drake"],
+      "bonus_xp": 35,
+      "reward": ["flame_blade", "death_lance", "void_shroud"],
+      "difficulty": {"hp_ratio": 1.2, "pwr_ratio": 0.95}
+    },
+    "crypt": {
+      "name": "Crypt of the Damned",
+      "description": "A labyrinth of tombs below the Shadow Ruins. The dead do not rest here.",
+      "min_level": 5,
+      "floors": ["shade_walker", "shadow_archer", "bone_knight", "shade_walker", "shadow_archer", "bone_knight"],
+      "bonus_xp": 60,
+      "reward": ["void_cloak", "void_reaper", "dark_claymore", "shadow_fortress"],
+      "difficulty": {"hp_ratio": 1.5, "pwr_ratio": 1.0}
+    }
+  }
+}

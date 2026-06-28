@@ -12,7 +12,10 @@ From the repository root:
 python3 -m http.server 8000
 ```
 
-Then open <http://localhost:8000/visual%20game/>.
+Then open <http://localhost:8000/docs/>.
+
+The published GitHub Pages site is available at
+<https://cutepokemon42.github.io/jeremy_adventure_game/>.
 
 The local server is required because the browser loads the shared JSON data
 files. Progress saves automatically to browser LocalStorage. Number keys 1–9
@@ -21,7 +24,7 @@ activate the visible action buttons and Escape closes menus.
 ## Test
 
 ```sh
-cd "visual game"
+cd docs
 npm test
 ```
 
