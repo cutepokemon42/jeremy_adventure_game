@@ -5,7 +5,7 @@
       "description": "A hidden clearing deep in the jungle. Beasts have made their lair here.",
       "floors": ["snake", "boar", "boar"],
       "bonus_xp": 10,
-      "reward": ["jade_fang"],
+      "reward": ["jade_fang", "vampire_sword", "vampire_robe"],
       "difficulty": {"hp_ratio": 0.9, "pwr_ratio": 0.7}
     },
     "mine_dungeon": {
@@ -14,7 +14,7 @@
       "min_level": 2,
       "floors": ["cave_bat", "cave_bat", "rock_golem"],
       "bonus_xp": 25,
-      "reward": ["ice_scythe", "crystal_shield"],
+      "reward": ["ice_scythe", "crystal_shield", "berserker_axe", "iron_fortress"],
       "difficulty": {"hp_ratio": 1.3, "pwr_ratio": 0.9}
     },
     "molten_core": {
@@ -23,7 +23,7 @@
       "min_level": 3,
       "floors": ["lava_lizard", "fire_drake", "fire_drake"],
       "bonus_xp": 35,
-      "reward": ["flame_blade"],
+      "reward": ["flame_blade", "death_lance", "void_shroud"],
       "difficulty": {"hp_ratio": 1.2, "pwr_ratio": 0.95}
     },
     "crypt": {
@@ -32,7 +32,7 @@
       "min_level": 5,
       "floors": ["shade_walker", "shadow_archer", "bone_knight", "shade_walker", "shadow_archer", "bone_knight"],
       "bonus_xp": 60,
-      "reward": ["void_cloak"],
+      "reward": ["void_cloak", "void_reaper", "dark_claymore", "shadow_fortress"],
       "difficulty": {"hp_ratio": 1.5, "pwr_ratio": 1.0}
     }
   }

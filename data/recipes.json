@@ -34,6 +34,12 @@
       "name": "Healing Poultice",
       "requires": {"herb": 2},
       "creates": {"healing_poultice": 1}
-    }
+    },
+    "venom_spear": {"name": "Venom Spear", "requires": {"wood": 3, "venom": 2}, "creates": {"venom_spear": 1}},
+    "swift_longbow": {"name": "Swift Longbow", "requires": {"wood": 4, "crystal": 2}, "creates": {"swift_longbow": 1}},
+    "berserker_club": {"name": "Berserker Club", "requires": {"stone": 3, "hide": 2}, "creates": {"berserker_club": 1}},
+    "poison_dagger": {"name": "Poison Dagger", "requires": {"iron": 2, "venom": 1}, "creates": {"poison_dagger": 1}},
+    "mark_blade": {"name": "Mark Blade", "requires": {"iron": 4, "shadow_essence": 1}, "creates": {"mark_blade": 1}},
+    "shield_plate": {"name": "Shield Plate", "requires": {"stone": 4, "iron": 2}, "creates": {"shield_plate": 1}}
   }
 }

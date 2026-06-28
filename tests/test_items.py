@@ -10,7 +10,7 @@ from models import (
 
 ITEMS = {
     "healing_poultice": {"name": "Healing Poultice", "type": "consumable",
-                         "effect": {"kind": "heal", "amount": 12}},
+                         "effect": {"kind": "heal", "ratio": 0.60}},
     "wooden_spear": {"name": "Wooden Spear", "type": "craftable",
                      "equip": {"slot": "weapon", "pwr_bonus": 1}},
     "iron_sword": {"name": "Iron Sword", "type": "craftable",

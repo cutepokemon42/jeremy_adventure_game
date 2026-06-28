@@ -8,15 +8,17 @@ from leveling import apply_level
 from models import Player, add_item, effective_max_hp, effective_pwr
 
 
-def spawn_enemy(enemy_id: str, enemies: dict) -> dict:
+def spawn_enemy(enemy_id: str, enemies: dict, world_scale: float = 1.0) -> dict:
     """Build a live, mutable enemy instance from its definition."""
     d = enemies[enemy_id]
+    hp = max(d["hp"], round(d["hp"] * world_scale))
+    pwr = max(d["pwr"], round(d["pwr"] * world_scale))
     return {
         "id": enemy_id,
         "name": d["name"],
-        "hp": d["hp"],
-        "max_hp": d["hp"],
-        "pwr": d["pwr"],
+        "hp": hp,
+        "max_hp": hp,
+        "pwr": pwr,
         "xp": d["xp"],
         "drops": d.get("drops", []),
     }

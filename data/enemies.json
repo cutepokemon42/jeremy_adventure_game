@@ -3,55 +3,85 @@
     "boar": {
       "name": "Boar", "type": "melee",
       "hp": 8, "pwr": 2, "xp": 4, "speed": 1,
-      "drops": [{"id": "hide", "chance": 0.5, "min": 1, "max": 1}]
+      "drops": [
+        {"id": "hide", "chance": 0.5, "min": 1, "max": 1},
+        {"id": "shadow_blade", "chance": 0.05, "min": 1, "max": 1},
+        {"id": "shadow_cloak", "chance": 0.04, "min": 1, "max": 1}
+      ]
     },
     "snake": {
       "name": "Snake", "type": "ranged",
       "hp": 5, "pwr": 3, "xp": 5, "speed": 2,
-      "drops": [{"id": "venom", "chance": 0.25, "min": 1, "max": 1}]
+      "drops": [
+        {"id": "venom", "chance": 0.25, "min": 1, "max": 1},
+        {"id": "viper_shot", "chance": 0.05, "min": 1, "max": 1},
+        {"id": "blood_robe", "chance": 0.04, "min": 1, "max": 1}
+      ]
     },
     "cave_bat": {
       "name": "Cave Bat", "type": "melee",
       "hp": 6, "pwr": 3, "xp": 6, "speed": 2,
-      "drops": [{"id": "hide", "chance": 0.4, "min": 1, "max": 1}]
+      "drops": [
+        {"id": "hide", "chance": 0.4, "min": 1, "max": 1},
+        {"id": "phantom_bow", "chance": 0.04, "min": 1, "max": 1},
+        {"id": "berserker_hide", "chance": 0.04, "min": 1, "max": 1}
+      ]
     },
     "rock_golem": {
       "name": "Rock Golem", "type": "melee",
       "hp": 20, "pwr": 5, "xp": 15, "speed": 1,
       "drops": [
         {"id": "crystal", "chance": 0.6, "min": 1, "max": 2},
-        {"id": "iron",    "chance": 0.5, "min": 1, "max": 2}
+        {"id": "iron",    "chance": 0.5, "min": 1, "max": 2},
+        {"id": "ancient_sword", "chance": 0.04, "min": 1, "max": 1},
+        {"id": "ancient_guard", "chance": 0.03, "min": 1, "max": 1}
       ]
     },
     "lava_lizard": {
       "name": "Lava Lizard", "type": "melee",
       "hp": 14, "pwr": 5, "xp": 8, "speed": 1,
-      "drops": [{"id": "drake_scale", "chance": 0.35, "min": 1, "max": 1}]
+      "drops": [
+        {"id": "drake_scale", "chance": 0.35, "min": 1, "max": 1},
+        {"id": "iron_will", "chance": 0.04, "min": 1, "max": 1},
+        {"id": "ember_plate", "chance": 0.03, "min": 1, "max": 1}
+      ]
     },
     "fire_drake": {
       "name": "Fire Drake", "type": "ranged",
       "hp": 22, "pwr": 7, "xp": 16, "speed": 1,
       "drops": [
         {"id": "drake_scale", "chance": 0.55, "min": 1, "max": 2},
-        {"id": "ember",       "chance": 0.4,  "min": 1, "max": 1}
+        {"id": "ember",       "chance": 0.4,  "min": 1, "max": 1},
+        {"id": "soul_staff", "chance": 0.04, "min": 1, "max": 1},
+        {"id": "void_shroud", "chance": 0.03, "min": 1, "max": 1}
       ]
     },
     "shade_walker": {
       "name": "Shade Walker", "type": "melee",
       "hp": 18, "pwr": 7, "xp": 13, "speed": 2,
-      "drops": [{"id": "shadow_essence", "chance": 0.45, "min": 1, "max": 1}]
+      "drops": [
+        {"id": "shadow_essence", "chance": 0.45, "min": 1, "max": 1},
+        {"id": "shadow_fury", "chance": 0.04, "min": 1, "max": 1},
+        {"id": "shadow_cloak", "chance": 0.04, "min": 1, "max": 1}
+      ]
     },
     "bone_knight": {
       "name": "Bone Knight", "type": "melee",
       "hp": 30, "pwr": 9, "xp": 22, "speed": 1,
-      "drops": [{"id": "bone", "chance": 0.6, "min": 1, "max": 2}]
+      "drops": [
+        {"id": "bone", "chance": 0.6, "min": 1, "max": 2},
+        {"id": "dark_claymore", "chance": 0.03, "min": 1, "max": 1},
+        {"id": "bone_plate", "chance": 0.03, "min": 1, "max": 1}
+      ]
     },
     "shadow_archer": {
       "name": "Shadow Archer", "type": "ranged",
       "hp": 15, "pwr": 8, "xp": 16, "speed": 1,
       "drops": [
         {"id": "shadow_essence", "chance": 0.5, "min": 1, "max": 1},
-        {"id": "bone",           "chance": 0.3, "min": 1, "max": 1}
+        {"id": "bone",           "chance": 0.3, "min": 1, "max": 1},
+        {"id": "death_arrow", "chance": 0.04, "min": 1, "max": 1},
+        {"id": "guardian_plate", "chance": 0.03, "min": 1, "max": 1}
       ]
     }
   }

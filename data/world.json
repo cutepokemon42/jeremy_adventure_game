@@ -41,6 +41,7 @@
     "deep_mine": {
       "name": "Deep Mine",
       "description": "A cramped dungeon below the mines. Crystal glints in the walls, and something heavy moves in the dark.",
+      "parent": "mines",
       "enemies": ["cave_bat", "rock_golem"],
       "gather": [
         {"kind": "item", "id": "stone",   "min": 1, "max": 2},

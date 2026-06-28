@@ -49,79 +49,98 @@ on gather instead of entering the bag. Crystal does the same.
 
 ## 3. Enemies
 
-| Enemy | Type | HP | PWR | Speed | XP | Location | Drops |
-|-------|------|----|-----|-------|----|----------|-------|
-| Boar | Melee | 8 | 2 | 1 | 4 | Jungle | hide (50%) |
-| Snake | **Ranged** | 5 | 3 | **2** | 5 | Jungle | venom (25%) |
-| Cave Bat | Melee | 6 | 3 | **2** | 6 | Deep Mine | hide (40%) |
-| Rock Golem | Melee | 20 | 5 | 1 | 15 | Deep Mine | crystal (60%), iron (50%) |
-| Lava Lizard | Melee | 14 | 5 | 1 | 8 | Volcano | drake scale (35%) |
-| Fire Drake | **Ranged** | 22 | 7 | 1 | 16 | Volcano | drake scale (55%), ember (40%) |
-| Shade Walker | Melee | 18 | 7 | **2** | 13 | Shadow Ruins | shadow essence (45%) |
-| Bone Knight | Melee | 30 | 9 | 1 | 22 | Shadow Ruins | bone (60%) |
-| Shadow Archer | **Ranged** | 15 | 8 | 1 | 16 | Shadow Ruins | shadow essence (50%), bone (30%) |
+| Enemy | Type | HP | PWR | XP | Location | Drops |
+|-------|------|----|-----|----|----------|-------|
+| Boar | Melee | 8 | 2 | 4 | Jungle | hide (50%), **Shadow Blade (5%)**, **Shadow Cloak (4%)** |
+| Snake | **Ranged** | 5 | 3 | 5 | Jungle | venom (25%), **Viper Shot (5%)**, **Blood Robe (4%)** |
+| Cave Bat | Melee | 6 | 3 | 6 | Deep Mine | hide (40%), **Phantom Bow (4%)**, **Berserker Hide (4%)** |
+| Rock Golem | Melee | 20 | 5 | 15 | Deep Mine | crystal (60%), iron (50%), **Ancient Sword (4%)**, **Ancient Guard (3%)** |
+| Lava Lizard | Melee | 14 | 5 | 8 | Volcano | drake scale (35%), **Iron Will (4%)**, **Ember Plate (3%)** |
+| Fire Drake | **Ranged** | 22 | 7 | 16 | Volcano | drake scale (55%), ember (40%), **Soul Staff (4%)**, **Void Shroud (3%)** |
+| Shade Walker | Melee | 18 | 7 | 13 | Shadow Ruins | shadow essence (45%), **Shadow Fury (4%)**, **Shadow Cloak (4%)** |
+| Bone Knight | Melee | 30 | 9 | 22 | Shadow Ruins | bone (60%), **Dark Claymore (3%)**, **Bone Plate (3%)** |
+| Shadow Archer | **Ranged** | 15 | 8 | 16 | Shadow Ruins | shadow essence (50%), bone (30%), **Death Arrow (4%)**, **Guardian Plate (3%)** |
 
 **Type** — determines starting distance and aim disruption (see §7 Combat).
 Ranged enemies open at FAR; melee enemies open at CLOSE.
 
-**Speed** — enemies with speed 2 attack twice per round. The second strike
-is announced separately ("strikes again for N"). Guards only soften the first
-hit each round.
+**World scaling** — non-dungeon enemies scale with player level.
+Scaling factor: `1.0 + max(0, level - 2) × 0.15`. Enemy HP and PWR are scaled
+up to a minimum of their base stats; this keeps difficulty smooth as the player
+levels while never making early enemies easier.
+
+**Unique drops** — most enemies now carry 2 rare unique weapon/armor drops
+(shown in bold above). These are powerful items with special abilities and
+provide build variety throughout the game.
 
 **Dungeon scaling** — when spawned inside a dungeon, enemy HP and PWR are
 scaled relative to the player's current effective stats using the dungeon's
-`difficulty` ratios (see §5). Base stats are the floor; the enemy is never
-weaker than its normal version.
+`difficulty` ratios (see §5). Dungeon scaling overrides world scaling;
+base stats are the floor.
 
 ---
 
-## 4. Items
+## 4. Items (80 total)
 
-### Materials
+### Materials (13)
 Raw resources. Cannot be equipped. Some carry an `xp_value` and are smelted
 to XP automatically on gather.
 
-| Item | xp_value |
-|------|----------|
-| Wood, Stone, Iron, Hide, Venom, Herb, Bone, Drake Scale, Volcanic Stone | — |
-| Gold | 5 |
-| Crystal | 8 |
-| Ember | 10 |
-| Shadow Essence | 15 |
+Wood, Stone, Iron, Hide, Venom, Herb, Bone, Drake Scale, Volcanic Stone
+(no XP value); **Gold** (5 XP), **Crystal** (8 XP), **Ember** (10 XP),
+**Shadow Essence** (15 XP).
 
-### Consumables
+### Consumables (6)
 Used from the bag for an immediate effect. One is consumed per use.
 
-| Item | Effect |
-|------|--------|
-| Healing Poultice | Restores 12 HP (capped at effective max HP) |
+| Item | Healing |
+|------|---------|
+| Healing Poultice | 12 HP |
+| **Strong Poultice** | **25 HP** |
+| **Greater Poultice** | **40 HP** |
+| **Elixir of Life** | **60 HP** |
+| **Blood Draught** | **20 HP** |
+| **War Tonic** | **15 HP** |
 
-### Craftable gear (level-scaled)
+### Craftable gear (12, level-scaled)
 Crafted from materials. Each piece has a **level** rolled on craft (see §6).
 Level-scaled weapons and armor never have fixed stat bonuses; the level itself
 is the bonus.
 
-| Item | Type | Weapon type | Requires |
-|------|------|-------------|---------|
-| Wooden Spear | Weapon | Ranged | Wood ×3 |
-| Hunter's Bow | Weapon | Ranged | Wood ×4, Hide ×2 |
-| Iron Sword | Weapon | Melee | Wood ×1, Iron ×3 |
-| Bone Blade | Weapon | Melee | Bone ×3 |
-| Leather Armor | Armor | — | Hide ×2 |
-| Drake Armor | Armor | — | Volcanic Stone ×2, Drake Scale ×2 |
-| Healing Poultice | Consumable | — | Herb ×2 |
+**Base weapons/armor:**
+- Wooden Spear (Ranged, Wood ×3)
+- Hunter's Bow (Ranged, Wood ×4 + Hide ×2)
+- Iron Sword (Melee, Wood ×1 + Iron ×3)
+- Bone Blade (Melee, Bone ×3)
+- Leather Armor (Hide ×2)
+- Drake Armor (Volcanic Stone ×2 + Drake Scale ×2)
 
-### Unique gear (fixed stats)
-Awarded only by clearing dungeons. Stats and abilities are fixed regardless
-of when they are obtained.
+**Ability-based weapons/armor:**
+- **Venom Spear** (Ranged, poison ability, Wood ×3 + Venom ×2)
+- **Swift Longbow** (Ranged, swift ability, Wood ×4 + Crystal ×2)
+- **Berserker Club** (Melee, berserker ability, Stone ×3 + Hide ×2)
+- **Poison Dagger** (Melee, poison ability, Iron ×2 + Venom ×1)
+- **Mark Blade** (Melee, mark ability, Iron ×4 + Shadow Essence ×1)
+- **Shield Plate** (Armor, shield ability, Stone ×4 + Iron ×2)
 
-| Item | Slot | Bonus | Weapon type | Ability | Source |
-|------|------|-------|-------------|---------|--------|
-| Jade Fang | Weapon | +4 PWR | Melee | Lifesteal (40% of damage → HP) | Bandit Den |
-| Ice Scythe | Weapon | +6 PWR | Magic | Chill (−3 enemy PWR this round) | Deep Mine Dungeon |
-| Crystal Shield | Armor | +18 max HP | — | Thorns (3 dmg reflected per hit taken) | Deep Mine Dungeon |
-| Flame Blade | Weapon | +8 PWR | Magic | Burn (2 fire dmg/round until death) | Molten Core |
-| Void Cloak | Armor | +22 max HP | — | Regen (restore 2 HP at round start) | Crypt of the Damned |
+### Unique gear (49)
+
+**Dungeon reward items (5)** — fixed stats, awarded only by clearing dungeons:
+- **Jade Fang** (Melee weapon, +4 PWR, lifesteal)
+- **Ice Scythe** (Magic weapon, +6 PWR, chill)
+- **Crystal Shield** (Armor, +18 max HP, thorns)
+- **Flame Blade** (Magic weapon, +8 PWR, burn)
+- **Void Cloak** (Armor, +22 max HP, regen)
+
+**Enemy drops (44)** — rare 3–5% drops from world enemies, include powerful
+weapons and armor with custom abilities:
+
+| Weapon type | Count | Examples |
+|---|---|---|
+| Melee weapons | 15 | Shadow Blade (+7, execute), Berserker Axe (+7, berserker), Vampire Sword (+6, lifesteal), etc. |
+| Ranged weapons | 8 | Phantom Bow (+6, swift), Viper Shot (+5, poison), Death Arrow (+9, execute), etc. |
+| Magic weapons | 6 | Soul Staff (+7, burn), Venom Wand (+6, poison), Life Drain (+5, lifesteal), etc. |
+| Armor | 15 | Shadow Cloak (+15, shield), Ancient Guard (+20, shield), Vampire Robe (+14, regen), etc. |
 
 ### Weapon types
 
@@ -143,6 +162,31 @@ of when they are obtained.
 
 ---
 
+## 4b. Abilities (12 types)
+
+**Weapon offensive abilities:**
+
+| Ability | Trigger | Effect |
+|---------|---------|--------|
+| **Lifesteal** | Every hit | Restore HP equal to `ratio × damage` (e.g., 40% lifesteal on 50 dmg = 20 HP) |
+| **Chill** | Every hit | Reduce enemy PWR by `amount` for the rest of this round only |
+| **Burn** | First hit (melee/ranged) or every hit (magic) | Deal `damage` to enemy HP at start of each round until death |
+| **Execute** | Every hit | If enemy HP < `threshold × max_hp`, multiply your damage by `bonus` (e.g., execute when <30% HP deals 50% more) |
+| **Poison** | First hit or every hit (magic) | Deal `damage` to enemy HP per round for `ticks` rounds. Applies once unless magic weapon. |
+| **Mark** | First hit | First hit marks enemy. All subsequent hits deal `bonus_mult × 100` damage (e.g., 1.2 = +20%). Persists until enemy dies. |
+| **Swift** | Always | Ignore distance penalties; always deal 100% weapon damage (CLOSE or FAR) |
+
+**Armor defensive abilities:**
+
+| Ability | Trigger | Effect |
+|---------|---------|--------|
+| **Regen** | Start of round | Restore `amount` HP per round (capped at effective max HP) |
+| **Thorns** | After being hit | Reflect `amount` damage back to attacker; kills enemy if damage exceeds their remaining HP |
+| **Shield** | After being hit | Reduce damage from that hit by up to `amount` (minimum 1 damage). Activates automatically. |
+| **Fortify** | When HP < 30% max and hit | Reduce that hit's damage by 50% (rounded down, minimum 1). Invisible passive. |
+
+---
+
 ## 5. Dungeons
 
 Dungeons are a fixed sequence of enemies fought one after another. After each
@@ -152,10 +196,10 @@ items.
 
 | Dungeon | Location | Min level | Floors | Difficulty | Bonus XP | Reward |
 |---------|----------|-----------|--------|------------|----------|--------|
-| Bandit Den | Jungle | — | snake → boar → boar | 0.9× HP / 0.7× PWR | 10 | Jade Fang |
-| Deep Mine Dungeon | Mines | 2 | bat → bat → rock golem | 1.3× HP / 0.9× PWR | 25 | Ice Scythe, Crystal Shield |
-| Molten Core | Volcano | 3 | lizard → drake → drake | 1.2× HP / 0.95× PWR | 35 | Flame Blade |
-| Crypt of the Damned | Shadow Ruins | 5 | shade → knight → shade → knight | 1.5× HP / 1.0× PWR | 60 | Void Cloak |
+| Bandit Den | Jungle | — | snake → boar → boar | 0.9× HP / 0.7× PWR | 10 | **Jade Fang, Vampire Sword, Vampire Robe** |
+| Deep Mine Dungeon | Mines | 2 | bat → bat → rock golem | 1.3× HP / 0.9× PWR | 25 | **Ice Scythe, Crystal Shield, Berserker Axe, Iron Fortress** |
+| Molten Core | Volcano | 3 | lizard → drake → drake | 1.2× HP / 0.95× PWR | 35 | **Flame Blade, Death Lance, Void Shroud** |
+| Crypt of the Damned | Shadow Ruins | 5 | shade → archer → knight → shade → archer → knight | 1.5× HP / 1.0× PWR | 60 | **Void Cloak, Void Reaper, Dark Claymore, Shadow Fortress** |
 
 Difficulty ratios are multiplied by the player's effective max HP and effective
 PWR at the time the enemy spawns. The base stat is the floor.
@@ -218,14 +262,34 @@ These modifiers stack with chill reductions.
    - **Move back** — change distance CLOSE → FAR. Turn spent; no attack. (Hidden for magic weapons.)
    - **Flee** — exit with no rewards.
 
-3. **Enemy's turn** — compute effective enemy PWR:
+3. **Enemy's turn** — single attack:
    - Apply distance modifier (kiting or disrupted aim, whichever applies).
    - Apply chill reduction if active.
-   - Enemy attacks `speed` times. Guard applies only to the first attack.
-   - After each attack, thorns armor reflects damage; if this kills the enemy, victory.
+   - Enemy attacks once. Guard reduces damage to `ceil(pwr/2)`, floored at 1.
+   - Apply shield or fortify armor reductions after the hit (if applicable).
+   - If player has thorns armor: reflect `amount` damage. If this kills the enemy, victory.
    - If player HP ≤ 0: respawn (see §11).
 
 4. Repeat from step 1.
+
+### Ability notes
+
+**Poison ticks:** Damage is applied at the start of the round, before the player
+moves. A poisoned enemy loses `damage` HP per round for `ticks` rounds. Once
+the ticks expire, the poison clears.
+
+**Marked damage:** Once marked, every subsequent hit against that enemy deals
+bonus damage. The mark indicator persists visibly in the status line until the
+enemy dies. Multiple weapon hits can extend the mark, but only one mark per
+enemy exists.
+
+**Execute threshold:** If an enemy is below the threshold (e.g., 30% HP), the
+next successful hit applies the execute bonus. This resets each round so low-HP
+enemies are always vulnerable to execution.
+
+**Shield vs Fortify:** Shield is a flat reduction (up to `amount`); fortify only
+triggers at low HP and halves the incoming damage. Both apply after the hit lands,
+reducing the damage you take to match the displayed message.
 
 ---
 

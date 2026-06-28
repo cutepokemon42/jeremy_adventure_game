@@ -85,9 +85,9 @@ def use_item(player: Player, item_id: str, items: dict) -> dict:
     """Use one consumable from the bag and apply its effect. Pure: no I/O.
 
     Returns a result dict: {"ok": bool, "reason"/"effect"/"healed"/... }.
-    Currently the only effect kind is "heal" (restore N HP, capped at effective
-    max HP). Fails (ok=False) if the item is missing, not a consumable, or has no
-    usable effect. On success the item is consumed.
+    Currently the only effect kind is "heal" (restore HP based on ratio of
+    effective max HP). Fails (ok=False) if the item is missing, not a consumable,
+    or has no usable effect. On success the item is consumed.
     """
     if player.bag.get(item_id, 0) <= 0:
         return {"ok": False, "reason": "missing", "item_id": item_id}
@@ -98,8 +98,10 @@ def use_item(player: Player, item_id: str, items: dict) -> dict:
     if effect.get("kind") != "heal":
         return {"ok": False, "reason": "no_effect", "item_id": item_id}
     cap = effective_max_hp(player, items)
+    ratio = effect.get("ratio", 0)
+    amount = max(1, int(cap * ratio))
     before = player.hp
-    player.hp = min(cap, player.hp + effect["amount"])
+    player.hp = min(cap, player.hp + amount)
     healed = player.hp - before
     remove_items(player, {item_id: 1})
     return {"ok": True, "effect": "heal", "item_id": item_id, "healed": healed, "hp": player.hp}

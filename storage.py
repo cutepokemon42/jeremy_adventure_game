@@ -61,14 +61,15 @@ def validate_data(world: dict, items: dict, enemies: dict, recipes: dict, win: d
                 raise ValueError(f"recipe {recipe_id}: unknown item '{item_id}'")
     # Consumable effects and equipment blocks must be well-formed so the game
     # never silently does nothing when the player uses or equips an item.
-    _ABILITY_KINDS = {"lifesteal", "chill", "thorns", "burn", "regen"}
+    _ABILITY_KINDS = {"lifesteal", "chill", "thorns", "burn", "regen", "execute", "berserker", "poison", "mark", "swift", "shield", "fortify"}
     for item_id, item in items.items():
         if item.get("type") == "consumable":
             effect = item.get("effect", {})
             if effect.get("kind") != "heal":
                 raise ValueError(f"item {item_id}: consumable has unknown effect kind '{effect.get('kind')}'")
-            if not isinstance(effect.get("amount"), int) or effect["amount"] <= 0:
-                raise ValueError(f"item {item_id}: consumable heal amount must be a positive int")
+            ratio = effect.get("ratio")
+            if not isinstance(ratio, (int, float)) or not (0 < ratio <= 1):
+                raise ValueError(f"item {item_id}: consumable heal ratio must be a number between 0 and 1")
         equip = item.get("equip")
         if equip is not None:
             slot = equip.get("slot")

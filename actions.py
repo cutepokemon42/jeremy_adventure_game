@@ -92,16 +92,34 @@ def show_inventory(state: GameState) -> None:
 def travel(state: GameState) -> None:
     here = state.player.location
     player_level = state.player.level
-    dests = [loc_id for loc_id in state.world if loc_id != here]
+    here_parent = state.world[here].get("parent")
+
+    # Sub-locations (those with a parent) are only reachable from their parent.
+    # From inside a sub-location, only the parent is available as a destination.
+    if here_parent:
+        dests = [here_parent]
+    else:
+        dests = [
+            loc_id for loc_id in state.world
+            if loc_id != here
+            and not (state.world[loc_id].get("parent") not in (None, here))
+            # include the location if it has no parent, OR its parent is here
+        ]
+
     labels = []
     for d in dests:
         loc = state.world[d]
         req = loc.get("min_level", 1)
-        if req > player_level:
+        if loc.get("parent") == here:
+            labels.append(f"Descend to {loc['name']}")
+        elif here_parent and d == here_parent:
+            labels.append(f"Ascend to {loc['name']}")
+        elif req > player_level:
             labels.append(f"{loc['name']}  [LOCKED — requires level {req}]")
         else:
             labels.append(loc["name"])
     labels.append("Stay here")
+
     choice = engine.menu("Travel where?", labels)
     if choice == len(dests):
         return
@@ -111,7 +129,13 @@ def travel(state: GameState) -> None:
         print(f"You can't go there yet. Reach level {req} first.")
         return
     state.player.location = dest_id
-    print(f"You travel to {state.world[dest_id]['name']}.")
+    dest_name = state.world[dest_id]["name"]
+    if state.world[dest_id].get("parent") == here:
+        print(f"You descend into the {dest_name}.")
+    elif here_parent:
+        print(f"You ascend back to the {dest_name}.")
+    else:
+        print(f"You travel to {dest_name}.")
 
 
 # --- gather ----------------------------------------------------------------
@@ -227,7 +251,7 @@ def _victory(state: GameState, enemy: dict) -> str:
     return "win"
 
 
-def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None) -> str:
+def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None, world_scale: float = 1.0) -> str:
     """Fight a single enemy. Returns 'win', 'lose', or 'flee'.
 
     Distance starts based on enemy type (ranged → FAR, melee → CLOSE) and can
@@ -237,25 +261,21 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
       Ranged at CLOSE— 80% player damage; no kiting benefit
       Ranged at FAR  — 100% player damage; enemy 75% PWR (kiting)
       Ranged enemy at CLOSE — enemy 70% PWR (disrupted aim)
-      Magic          — ignores distance entirely
-
-    Enemies with speed > 1 attack that many times per round."""
+      Magic          — ignores distance entirely"""
     if difficulty:
         enemy = combat.spawn_dungeon_enemy(enemy_id, state.enemies, state.player, state.items, difficulty)
     else:
-        enemy = combat.spawn_enemy(enemy_id, state.enemies)
+        enemy = combat.spawn_enemy(enemy_id, state.enemies, world_scale)
 
     wtype = _weapon_type(state)
     enemy_def = state.enemies.get(enemy_id, {})
     enemy_type = enemy_def.get("type", "melee")
-    enemy_speed = enemy_def.get("speed", 1)
 
     # Starting distance is set by the enemy's combat type
     distance = "far" if enemy_type == "ranged" else "close"
 
-    speed_note = f", attacks ×{enemy_speed}" if enemy_speed > 1 else ""
     print(f"\nA {enemy['name']} [{enemy_type}] appears!"
-          f" HP {enemy['hp']}, PWR {enemy['pwr']}{speed_note}")
+          f" HP {enemy['hp']}, PWR {enemy['pwr']}")
     if distance == "far":
         print(f"  They keep their distance. [FAR]"
               + (" Rush in for full melee damage!" if wtype == "melee" else ""))
@@ -272,6 +292,16 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
             burn_dmg = enemy["_burning"]
             enemy["hp"] -= burn_dmg
             print(f"The {enemy['name']} burns for {burn_dmg}!")
+            if enemy["hp"] <= 0:
+                return _victory(state, enemy)
+
+        if enemy.get("_poisoned"):
+            p_info = enemy["_poisoned"]
+            enemy["hp"] -= p_info["dmg"]
+            p_info["ticks"] -= 1
+            print(f"The {enemy['name']} is poisoned for {p_info['dmg']}! ({p_info['ticks']} ticks left)")
+            if p_info["ticks"] <= 0:
+                del enemy["_poisoned"]
             if enemy["hp"] <= 0:
                 return _victory(state, enemy)
 
@@ -320,13 +350,27 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
             distance = "far"
             print(f"You fall back from the {enemy['name']}! [Now FAR]")
         else:  # attack
+            w_ability = _slot_ability(state, "weapon")
+            kind = w_ability.get("kind")
             dmg_mult = _player_dmg_mult(wtype, distance)
+
+            # pre-attack modifiers
+            if kind == "swift":
+                dmg_mult = 1.0
+            if enemy.get("_marked"):
+                dmg_mult *= 1.2
+                print("(Marked! +20%)")
+            if kind == "berserker":
+                missing = 1 - state.player.hp / max(1, eff_max_hp)
+                dmg_mult *= 1 + missing * w_ability["max_bonus"]
+            if kind == "execute" and enemy["hp"] < enemy["max_hp"] * w_ability["threshold"]:
+                dmg_mult *= w_ability["bonus"]
+                print("(Execute!)")
+
             dmg = combat.player_attacks(state.player, enemy, state.items, dmg_mult)
             print(f"You hit the {enemy['name']} for {dmg}.")
 
-            w_ability = _slot_ability(state, "weapon")
             if dmg > 0 and enemy["hp"] > 0:
-                kind = w_ability.get("kind")
                 if kind == "lifesteal":
                     heal = max(1, int(dmg * w_ability["ratio"]))
                     cap = effective_max_hp(state.player, state.items)
@@ -343,6 +387,14 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
                         if not enemy.get("_burning_announced"):
                             print(f"The {enemy['name']} is set ablaze! ({w_ability['damage']} burn/round)")
                             enemy["_burning_announced"] = True
+                elif kind == "mark":
+                    if not enemy.get("_marked"):
+                        enemy["_marked"] = True
+                        print(f"The {enemy['name']} is marked!")
+                elif kind == "poison":
+                    if not enemy.get("_poisoned") or wtype == "magic":
+                        enemy["_poisoned"] = {"dmg": w_ability["damage"], "ticks": w_ability["ticks"]}
+                        print(f"The {enemy['name']} is poisoned! ({w_ability['damage']} dmg, {w_ability['ticks']} ticks)")
 
             if enemy["hp"] <= 0:
                 return _victory(state, enemy)
@@ -364,32 +416,44 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
         orig_pwr = enemy["pwr"]
         enemy["pwr"] = eff_pwr
 
-        for attack_num in range(enemy_speed):
+        # check fortify before the attack
+        a_ability = _slot_ability(state, "armor")
+        fortify_active = a_ability.get("kind") == "fortify" and state.player.hp < eff_max_hp * 0.3
+        taken = combat.enemy_attacks(state.player, enemy, guarded=guarded)
+
+        if taken > 0 and a_ability.get("kind") == "shield":
+            reduction = min(a_ability["amount"], max(0, taken - 1))
+            if reduction > 0:
+                state.player.hp += reduction
+                taken -= reduction
+                print(f"Shield absorbs {reduction}.")
+        if fortify_active and taken > 1:
+            reduction = taken // 2
+            state.player.hp += reduction
+            taken -= reduction
+            print(f"Fortify! Reduced by {reduction}.")
+
+        print(f"The {enemy['name']} hits you for {taken}.")
+
+        if taken > 0 and a_ability.get("kind") == "thorns":
+            thorns_dmg = a_ability["amount"]
+            enemy["hp"] -= thorns_dmg
+            print(f"Thorns deal {thorns_dmg} back to the {enemy['name']}.")
             if enemy["hp"] <= 0:
-                break
-            guard_this = guarded and attack_num == 0
-            taken = combat.enemy_attacks(state.player, enemy, guarded=guard_this)
-            label = "hits you" if attack_num == 0 else "strikes again"
-            print(f"The {enemy['name']} {label} for {taken}.")
-
-            if taken > 0 and a_ability.get("kind") == "thorns":
-                thorns_dmg = a_ability["amount"]
-                enemy["hp"] -= thorns_dmg
-                print(f"Thorns deal {thorns_dmg} back to the {enemy['name']}.")
-                if enemy["hp"] <= 0:
-                    enemy["pwr"] = orig_pwr
-                    return _victory(state, enemy)
-
-            if state.player.hp <= 0:
                 enemy["pwr"] = orig_pwr
-                return "lose"
+                return _victory(state, enemy)
+
+        if state.player.hp <= 0:
+            enemy["pwr"] = orig_pwr
+            return "lose"
 
         enemy["pwr"] = orig_pwr
 
 
 def fight_action(state: GameState) -> None:
     loc = state.world[state.player.location]
-    _fight_enemy(state, random.choice(loc["enemies"]))
+    scale = 1.0 + max(0, state.player.level - 2) * 0.15
+    _fight_enemy(state, random.choice(loc["enemies"]), world_scale=scale)
 
 
 def dungeon_action(state: GameState) -> None:
