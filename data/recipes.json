@@ -1,0 +1,39 @@
+{
+  "recipes": {
+    "wooden_spear": {
+      "name": "Wooden Spear",
+      "requires": {"wood": 3},
+      "creates": {"wooden_spear": 1}
+    },
+    "hunters_bow": {
+      "name": "Hunter's Bow",
+      "requires": {"wood": 4, "hide": 2},
+      "creates": {"hunters_bow": 1}
+    },
+    "iron_sword": {
+      "name": "Iron Sword",
+      "requires": {"wood": 1, "iron": 3},
+      "creates": {"iron_sword": 1}
+    },
+    "bone_blade": {
+      "name": "Bone Blade",
+      "requires": {"bone": 3},
+      "creates": {"bone_blade": 1}
+    },
+    "leather_armor": {
+      "name": "Leather Armor",
+      "requires": {"hide": 2},
+      "creates": {"leather_armor": 1}
+    },
+    "drake_armor": {
+      "name": "Drake Armor",
+      "requires": {"volcanic_stone": 2, "drake_scale": 2},
+      "creates": {"drake_armor": 1}
+    },
+    "healing_poultice": {
+      "name": "Healing Poultice",
+      "requires": {"herb": 2},
+      "creates": {"healing_poultice": 1}
+    }
+  }
+}

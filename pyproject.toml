@@ -1,0 +1,5 @@
+[tool.pytest.ini_options]
+# Modules live at the project root (flat layout), so put the root on sys.path
+# and only collect from tests/.
+pythonpath = ["."]
+testpaths = ["tests"]

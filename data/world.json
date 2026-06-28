@@ -1,0 +1,74 @@
+{
+  "locations": {
+    "spawn": {
+      "name": "Spawn",
+      "description": "A safe camp with a cold fire pit. Paths lead out in every direction.",
+      "enemies": [],
+      "gather": []
+    },
+    "forest": {
+      "name": "Forest",
+      "description": "Quiet trees and fallen branches. Good for wood and the odd healing herb, and nothing bites.",
+      "enemies": [],
+      "gather": [
+        {"kind": "item", "id": "wood", "min": 1, "max": 3},
+        {"kind": "item", "id": "herb", "min": 0, "max": 1},
+        {"kind": "xp",   "min": 1, "max": 2}
+      ]
+    },
+    "jungle": {
+      "name": "Jungle",
+      "description": "Dense leaves and animal tracks. There is wood and herbs here, and things that hunt back.",
+      "dungeon": "jungle_den",
+      "enemies": ["boar", "snake"],
+      "gather": [
+        {"kind": "item", "id": "wood", "min": 1, "max": 2},
+        {"kind": "item", "id": "herb", "min": 0, "max": 1},
+        {"kind": "xp",   "min": 1, "max": 3}
+      ]
+    },
+    "mines": {
+      "name": "Mines",
+      "description": "Dark tunnels with stone, iron ore, and the odd vein of gold. A narrow shaft drops into the deep mine.",
+      "dungeon": "mine_dungeon",
+      "enemies": [],
+      "gather": [
+        {"kind": "item", "id": "stone", "min": 1, "max": 3},
+        {"kind": "item", "id": "iron",  "min": 0, "max": 2},
+        {"kind": "item", "id": "gold",  "min": 0, "max": 1}
+      ]
+    },
+    "deep_mine": {
+      "name": "Deep Mine",
+      "description": "A cramped dungeon below the mines. Crystal glints in the walls, and something heavy moves in the dark.",
+      "enemies": ["cave_bat", "rock_golem"],
+      "gather": [
+        {"kind": "item", "id": "stone",   "min": 1, "max": 2},
+        {"kind": "item", "id": "iron",    "min": 0, "max": 2},
+        {"kind": "item", "id": "crystal", "min": 0, "max": 1}
+      ]
+    },
+    "volcano": {
+      "name": "Volcano",
+      "description": "A scorched peak wreathed in ash. The ground is hot underfoot and the air smells of sulfur.",
+      "min_level": 3,
+      "dungeon": "molten_core",
+      "enemies": ["lava_lizard", "fire_drake"],
+      "gather": [
+        {"kind": "item", "id": "volcanic_stone", "min": 1, "max": 3},
+        {"kind": "item", "id": "ember",          "min": 0, "max": 2}
+      ]
+    },
+    "shadow_ruins": {
+      "name": "Shadow Ruins",
+      "description": "The skeleton of an ancient city swallowed by darkness. Nothing living should be here.",
+      "min_level": 5,
+      "dungeon": "crypt",
+      "enemies": ["shade_walker", "bone_knight", "shadow_archer"],
+      "gather": [
+        {"kind": "item", "id": "shadow_essence", "min": 0, "max": 1},
+        {"kind": "item", "id": "bone",           "min": 1, "max": 2}
+      ]
+    }
+  }
+}

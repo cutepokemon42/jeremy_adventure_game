@@ -1,0 +1,104 @@
+{
+  "items": {
+    "wood":  {"name": "Wood",  "type": "material"},
+    "stone": {"name": "Stone", "type": "material"},
+    "iron":  {"name": "Iron",  "type": "material"},
+    "gold":  {"name": "Gold",  "type": "material", "xp_value": 5},
+    "hide":  {"name": "Hide",  "type": "material"},
+    "venom": {"name": "Venom", "type": "material"},
+    "herb":  {"name": "Herb",  "type": "material"},
+    "crystal":        {"name": "Crystal",        "type": "material", "xp_value": 8},
+    "volcanic_stone": {"name": "Volcanic Stone", "type": "material"},
+    "ember":          {"name": "Ember",          "type": "material", "xp_value": 10},
+    "drake_scale":    {"name": "Drake Scale",    "type": "material"},
+    "shadow_essence": {"name": "Shadow Essence", "type": "material", "xp_value": 15},
+    "bone":           {"name": "Bone",           "type": "material"},
+
+    "healing_poultice": {
+      "name": "Healing Poultice",
+      "type": "consumable",
+      "effect": {"kind": "heal", "amount": 12}
+    },
+
+    "wooden_spear": {
+      "name": "Wooden Spear",
+      "type": "craftable",
+      "equip": {"slot": "weapon", "weapon_type": "ranged", "level_scaled": true}
+    },
+    "hunters_bow": {
+      "name": "Hunter's Bow",
+      "type": "craftable",
+      "equip": {"slot": "weapon", "weapon_type": "ranged", "level_scaled": true}
+    },
+    "iron_sword": {
+      "name": "Iron Sword",
+      "type": "craftable",
+      "equip": {"slot": "weapon", "weapon_type": "melee", "level_scaled": true}
+    },
+    "bone_blade": {
+      "name": "Bone Blade",
+      "type": "craftable",
+      "equip": {"slot": "weapon", "weapon_type": "melee", "level_scaled": true}
+    },
+
+    "leather_armor": {
+      "name": "Leather Armor",
+      "type": "craftable",
+      "equip": {"slot": "armor", "level_scaled": true}
+    },
+    "drake_armor": {
+      "name": "Drake Armor",
+      "type": "craftable",
+      "equip": {"slot": "armor", "level_scaled": true}
+    },
+
+    "jade_fang": {
+      "name": "Jade Fang",
+      "type": "unique",
+      "equip": {
+        "slot": "weapon",
+        "weapon_type": "melee",
+        "pwr_bonus": 4,
+        "ability": {"kind": "lifesteal", "ratio": 0.4}
+      }
+    },
+    "ice_scythe": {
+      "name": "Ice Scythe",
+      "type": "unique",
+      "equip": {
+        "slot": "weapon",
+        "weapon_type": "magic",
+        "pwr_bonus": 6,
+        "ability": {"kind": "chill", "amount": 3}
+      }
+    },
+    "crystal_shield": {
+      "name": "Crystal Shield",
+      "type": "unique",
+      "equip": {
+        "slot": "armor",
+        "max_hp_bonus": 18,
+        "ability": {"kind": "thorns", "amount": 3}
+      }
+    },
+    "flame_blade": {
+      "name": "Flame Blade",
+      "type": "unique",
+      "equip": {
+        "slot": "weapon",
+        "weapon_type": "magic",
+        "pwr_bonus": 8,
+        "ability": {"kind": "burn", "damage": 2}
+      }
+    },
+    "void_cloak": {
+      "name": "Void Cloak",
+      "type": "unique",
+      "equip": {
+        "slot": "armor",
+        "max_hp_bonus": 22,
+        "ability": {"kind": "regen", "amount": 2}
+      }
+    }
+  }
+}
