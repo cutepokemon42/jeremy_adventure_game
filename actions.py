@@ -429,6 +429,12 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
                 state.player.hp += gained
                 print(f"You regenerate {gained} HP (HP {state.player.hp}/{cap}).")
 
+        mana_regen = 5
+        w_ability = _slot_ability(state, "weapon")
+        if w_ability.get("kind") == "mana_regen_boost":
+            mana_regen += w_ability.get("amount", 0)
+        state.player.mana = min(state.player.max_mana, state.player.mana + mana_regen)
+
         # --- player move menu ---
         dist_label = "CLOSE" if distance == "close" else "FAR  "
         moves = [(_attack_label(state, distance), "attack")]

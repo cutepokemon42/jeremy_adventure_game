@@ -22,6 +22,9 @@ class Player:
     # Per-item level for level-scaled equipment, rolled when the item is obtained.
     # Unique/fixed items are not in this dict; their bonus is read from items data.
     item_levels: dict[str, int] = field(default_factory=dict)
+    # Mana system for magic spells
+    mana: int = 100
+    max_mana: int = 100
 
 
 @dataclass

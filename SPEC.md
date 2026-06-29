@@ -552,7 +552,91 @@ Defeating The Timeless One triggers a victory message. **No post-game content ex
 
 ---
 
-## 17. Parked / future ideas
+## 18. Mana System & Spell Abilities
+
+Magic weapons and some armor pieces now introduce a **mana system** for casting spells and special abilities.
+
+**Mana Mechanics:**
+- **Max Mana**: 100 (base, not affected by leveling)
+- **Mana Regen**: 5 per round (regenerated at the start of each combat round)
+- **Mana Pool Boost**: Certain items (e.g., Spectral Circlet) increase max mana
+- **Mana Regen Boost**: Certain items (e.g., Mystic Robe) add to the base 5 regen per round
+
+**Spell Abilities (mana-based):**
+Spells consume mana when cast and have the following types:
+
+| Spell | Mana Cost | Effect |
+|-------|-----------|--------|
+| **Spell Freeze** | 12 | Chills enemy for 4 PWR reduction, +30% damage |
+| **Spell Fireball** | 15 | Deals 1.5× scaled damage |
+| **Spell Heal** | 20 | Restores 40% of max HP to player |
+| **Spell Shock** | 18 | Deals 2× scaled damage (lightning) |
+| **Arcane Surge** | 10 | Deals 1.8× scaled damage, uses arcane power |
+| **Spell Void** | 25 | Deals 2.5× scaled damage (highest cost, highest reward) |
+| **Spell Drain** | 16 | Deals damage and lifesteals 40% of damage |
+| **Stone Skin** | 8 | Grants shield equal to 50% of incoming damage |
+| **Frost Shield** | 10 | Grants 5-point shield against damage |
+| **Spell Crystal** | 14 | Deals 1.4× damage, reflects 10% back to attacker |
+
+**Non-mana Spell Abilities (instant, no cost):**
+- **Fortify Aura**: Reduces incoming damage by 3 (costs 12 mana but passive)
+- **Mana Regen Boost**: Adds to mana regen per round
+- **Mana Pool Boost**: Increases max mana capacity
+
+Spells are only available when the player has equipped a magic weapon or armor with a spell ability. If mana is insufficient, the spell cannot be cast and the player must choose a different action.
+
+---
+
+## 19. New Craftable Items (30 Total)
+
+Added **30 new level-scaled craftable items** with varied crafting requirements and strategic abilities:
+
+**Mana-Using Magic Weapons (7):**
+- Frostbolt Staff (crystal 3, iron 2)
+- Fireball Tome (ember 3, crystal 2)
+- Heal Grimoire (herb 4, crystal 2)
+- Lightning Rod (crystal 4, iron 3)
+- Void Staff (shadow_essence 2, crystal 4)
+- Obsidian Staff (stone 4, shadow_essence 1)
+- Crystal Wand (crystal 4, iron 1)
+
+**Melee Weapons (8):**
+- Arcane Blade (iron 3, crystal 2)
+- Dexterous Claws (iron 2, hide 1)
+- Shadow Step Dagger (iron 2, shadow_essence 1)
+- Vortex Axe (iron 4, stone 2)
+- Consecrated Hammer (iron 4, herb 2)
+- Flame Tongue Sword (iron 3, ember 2)
+- Tide Caller Trident (iron 4, crystal 2)
+- [existing: Berserker Club, Mark Blade, Poison Dagger]
+
+**Ranged Weapons (5):**
+- Spiraling Pike (iron 3, stone 1)
+- Glacial Lance (crystal 3, iron 2)
+- Phantom Bow (wood 3, hide 2)
+- Fey Bow (wood 3, crystal 1)
+- [existing: Swift Longbow]
+
+**Armor Pieces (10):**
+- Stoneward Armor (stone 5, iron 3) — stone_skin ability
+- Thorned Gauntlets (iron 3, stone 2) — thorns 4
+- Ice Armor (crystal 3, stone 2) — frost_shield
+- Inferno Cloak (ember 3, hide 2) — burn
+- Mystic Robe (crystal 3, herb 2) — mana_regen_boost
+- Warden Shield (stone 5, iron 2) — shield 4
+- Runed Boots (hide 2, crystal 1) — regen 2
+- Spectral Circlet (crystal 3, shadow_essence 1) — mana_pool_boost 20
+- Spiked Sabatons (iron 3, stone 1) — thorns 3
+- Twilight Robe (hide 3, crystal 1) — regen 3
+- Blessed Plate (stone 5, crystal 1) — shield 5
+- Dragonscale Mail (stone 6, crystal 2) — shield 6
+- [existing: Shield Plate, Leather Armor, Drake Armor]
+
+All 30 items are **level-scaled** (bonus scales with item level) and are available to craft once materials are gathered.
+
+---
+
+## 20. Parked / future ideas
 
 - Additional biome tiers beyond Shadow Ruins (ice tundra, void realm, …).
 - Hunger / stamina layer affecting gather yield or combat performance.
