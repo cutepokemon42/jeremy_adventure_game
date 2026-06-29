@@ -34,6 +34,15 @@
       "bonus_xp": 60,
       "reward": ["void_cloak", "void_reaper", "dark_claymore", "shadow_fortress"],
       "difficulty": {"hp_ratio": 1.5, "pwr_ratio": 1.0}
+    },
+    "labyrinth": {
+      "name": "The Labyrinth",
+      "description": "An impossible structure that bends time and space. Within lies The Timeless One.",
+      "min_level": 10,
+      "floors": ["labyrinth_shade"],
+      "bonus_xp": 500,
+      "reward": [],
+      "difficulty": {"hp_ratio": 1.8, "pwr_ratio": 1.3}
     }
   }
 }

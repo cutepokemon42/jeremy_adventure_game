@@ -452,7 +452,107 @@ the original Jeremy overworld artwork.
 
 ---
 
-## 14. Parked / future ideas
+## 14. Ability Balancing & Scaling Caps (Late-Game)
+
+To prevent high-level players from becoming invincible, six abilities are now capped based on item level:
+
+| Ability | Scaling | Cap | Effect |
+|---------|---------|-----|--------|
+| **Lifesteal** | `heal = dmg × ratio` | `≤ missing_hp / 3` | Max 1/3 of missing HP healed per hit |
+| **Berserker** | `max_bonus × item_level` | `≤ 5.0` (500%) | Max 500% damage at 0% HP |
+| **Mark** | `1 + 0.2 × item_level` | `≤ 3.0` (×3 dmg) | Max 3× damage to marked enemies |
+| **Regen** | `amount × item_level` | `≤ max_hp / 10` | Max 10% of effective max HP per round |
+| **Poison** | `base + item_level - 1` | `≤ base × 8` | Max 8× base damage per tick |
+| **Burn** | Infinite duration (old) | **5 ticks** (new) | Fixed 5-tick duration; magic weapons refresh to 5 ticks |
+
+Caps apply to **both CLI and browser versions**. Non-scaled items are also capped where applicable (e.g., berserker club capped at 5× bonus).
+
+The **Burn** ability now uses a tick system identical to **Poison**: `enemy["_burning"] = {dmg, ticks: 5}`. Each round decrements `ticks` and deletes the burn when ticks ≤ 0. Magic weapons re-apply burn (refreshing ticks to 5); melee/ranged weapons only apply if not already burning.
+
+---
+
+## 15. Inventory: Type Filtering & Discard
+
+The inventory menu now features **type-based filtering** and a **discard option**:
+
+**Filter menu:**
+- "Show All" — all items in bag
+- "Weapons" — slot == "weapon"
+- "Armor" — slot == "armor"
+- "Materials" — type == "material"
+- "Consumables" — type == "consumable"
+- "Back" — return to main menu
+
+After selecting a filter, the player sees a list of items in that category. Clicking on an item displays **full details** (name, type, bonuses, abilities). Below the details, a submenu offers:
+- "Back" — return to the filtered list
+- "Discard 1" — remove 1 qty of the item from the bag
+
+After discarding, the filtered list refreshes. Attempting to discard an equipped item fails silently (item not in bag).
+
+---
+
+## 16. The Labyrinth & The Timeless One
+
+A new **end-game dungeon** accessible from Shadow Ruins at level 10+ introduces **permadeath** and a **6-phase revival boss**.
+
+### Location & Mechanics
+
+**The Labyrinth** (requires level 10):
+- Located as a new world location with `min_level: 10`
+- Entry warning: "You cannot flee. If you die here, your journey ends permanently."
+- Players choose "Enter (no turning back)" or "Leave" — leaving returns to Shadow Ruins
+- No flee option during labyrinth fights
+- Death triggers `game_over` state: save file is deleted, player sees "Your journey has ended. The Labyrinth claimed your soul," and cannot continue that game
+
+### 10 Floors: Left/Right Path Selection
+
+Each of the 10 floors presents a **choice menu**: "Go Left (agile enemies)" or "Go Right (heavy enemies)"
+
+**Left-path enemies** (agile, lower HP, higher PWR):
+- Labyrinth Shade: hp 40, pwr 12, xp 50
+- Labyrinth Wraith: hp 30, pwr 15, xp 55
+- Labyrinth Hunter: hp 35, pwr 16, xp 55
+
+**Right-path enemies** (heavy, higher HP, lower PWR):
+- Labyrinth Golem: hp 60, pwr 10, xp 50
+- Labyrinth Titan: hp 80, pwr 14, xp 60
+- Labyrinth Beast: hp 50, pwr 18, xp 60
+
+Enemies are **cycled by floor index** (`floor % 3`) so the same enemy appears multiple times. Dungeon scaling: `hp_ratio: 1.8, pwr_ratio: 1.3`.
+
+### The Timeless One: 6-Phase Revival Boss
+
+After clearing 10 floors, the player faces **The Timeless One** — a boss with **5 revivals** (6 total phases).
+
+**Base stats** (scaled with `hp_ratio: 3.0, pwr_ratio: 2.0`):
+- HP: 500 (scaled to ~1500 at player level 10)
+- PWR: 50 (scaled to ~100 at player level 10)
+- XP reward: 2000
+
+**Revival mechanic:**
+- When the boss reaches 0 HP:
+  - If phase < 5: increment phase, print revival lore, scale stats, clear DOT effects, restore HP, continue fight
+  - Else (phase = 5): declare victory, end combat
+- Revival scaling: `new_hp = original_hp × (1 + phase × 0.4)`, `new_pwr = original_pwr × (1 + phase × 0.25)`
+- After phase 1: boss hp × 1.4, pwr × 1.25
+- After phase 5: boss hp × 3.0, pwr × 2.25
+
+**Lore & Revival Messages:**
+1. "I have died a thousand times and returned a thousand more."
+2. "Every wound you deal me, I have already healed in another era."
+3. "I remember the fall of your ancestors. They also thought themselves worthy."
+4. "I will end this age as I ended all ages before it."
+5. "THIS IS MY FINAL FORM. DIE AS ALL THINGS DIE. BY MY HAND."
+
+Each revival clears poison, burn, mark, and chill effects from the boss to prevent pre-applied DOTs from killing it between phases.
+
+### End-game Flag
+
+Defeating The Timeless One triggers a victory message. **No post-game content exists yet** — this is the current end milestone. Future updates may add an epilogue or new-game+ mode.
+
+---
+
+## 17. Parked / future ideas
 
 - Additional biome tiers beyond Shadow Ruins (ice tundra, void realm, …).
 - Hunger / stamina layer affecting gather yield or combat performance.

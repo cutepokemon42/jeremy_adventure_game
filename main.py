@@ -32,7 +32,10 @@ def build_actions(state: GameState):
     if loc.get("dungeon") and loc["dungeon"] in state.dungeons:
         dungeon_name = state.dungeons[loc["dungeon"]]["name"]
         labels.append(f"Enter Dungeon ({dungeon_name})")
-        handlers.append(actions.dungeon_action)
+        if loc["dungeon"] == "labyrinth":
+            handlers.append(actions.labyrinth_action)
+        else:
+            handlers.append(actions.dungeon_action)
     if state.recipes:
         labels.append("Craft")
         handlers.append(actions.craft_action)
@@ -89,7 +92,12 @@ def main() -> None:
             storage.save_game(SAVE_PATH, state.player)
             print("Saved. See you next time.")
             return
-        handler(state)
+        result = handler(state)
+        if result == "game_over":
+            print("\nYour journey has ended. The Labyrinth claimed your soul.")
+            print("Start a new game to try again.")
+            storage.delete_save(SAVE_PATH)
+            return
         if state.player.hp <= 0:
             _respawn(state)
         unlocked = _unlocks_at(before_level, state.player.level, state)

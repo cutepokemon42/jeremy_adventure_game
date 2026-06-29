@@ -141,24 +141,57 @@ def _show_item_details(state: GameState, item_id: str) -> None:
             print(ability_str)
 
 
+def _filter_inventory(state: GameState, filter_choice: int) -> list[tuple[str, int]]:
+    """Filter inventory by type. Returns list of (item_id, qty) tuples."""
+    items_list = list(state.player.bag.items())
+    if filter_choice == 0:
+        return items_list
+    elif filter_choice == 1:
+        return [(iid, n) for iid, n in items_list if state.items.get(iid, {}).get("equip", {}).get("slot") == "weapon"]
+    elif filter_choice == 2:
+        return [(iid, n) for iid, n in items_list if state.items.get(iid, {}).get("equip", {}).get("slot") == "armor"]
+    elif filter_choice == 3:
+        return [(iid, n) for iid, n in items_list if state.items.get(iid, {}).get("type") == "material"]
+    elif filter_choice == 4:
+        return [(iid, n) for iid, n in items_list if state.items.get(iid, {}).get("type") == "consumable"]
+    return items_list
+
+
 def show_inventory(state: GameState) -> None:
     if not state.player.bag:
         print("\n-- Inventory --")
         print("  (empty)")
         return
 
-    items_list = list(state.player.bag.items())
-
     while True:
-        labels = [f"{_item_display(state, item_id)}: {n}" for item_id, n in items_list]
-        labels.append("Back")
-
-        choice = engine.menu("-- Inventory -- (select item for details)", labels)
-        if choice == len(items_list):
+        filter_labels = ["Show All", "Weapons", "Armor", "Materials", "Consumables", "Back"]
+        filter_choice = engine.menu("-- Inventory -- Filter by:", filter_labels)
+        if filter_choice == 5:
             return
 
-        item_id = items_list[choice][0]
-        _show_item_details(state, item_id)
+        filtered = _filter_inventory(state, filter_choice)
+
+        while True:
+            if not filtered:
+                print("  (no items in this category)")
+                break
+
+            labels = [f"{_item_display(state, item_id)}: {n}" for item_id, n in filtered]
+            labels.append("Back")
+
+            choice = engine.menu("Select item:", labels)
+            if choice == len(filtered):
+                break
+
+            item_id = filtered[choice][0]
+            _show_item_details(state, item_id)
+
+            if state.player.bag.get(item_id, 0) > 0:
+                sub_choice = engine.menu(f"Action for {_item_name(state, item_id)}:", ["Back", "Discard 1"])
+                if sub_choice == 1:
+                    remove_items(state.player, {item_id: 1})
+                    print(f"Discarded 1 {_item_name(state, item_id)}.")
+                    filtered = _filter_inventory(state, filter_choice)
 
 
 # --- travel ----------------------------------------------------------------
@@ -363,9 +396,12 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
 
         # --- start-of-round effects ---
         if enemy.get("_burning"):
-            burn_dmg = enemy["_burning"]
-            enemy["hp"] -= burn_dmg
-            print(f"The {enemy['name']} burns for {burn_dmg}!")
+            b_info = enemy["_burning"]
+            enemy["hp"] -= b_info["dmg"]
+            b_info["ticks"] -= 1
+            print(f"The {enemy['name']} burns for {b_info['dmg']}! ({b_info['ticks']} ticks left)")
+            if b_info["ticks"] <= 0:
+                del enemy["_burning"]
             if enemy["hp"] <= 0:
                 return _victory(state, enemy)
 
@@ -385,9 +421,9 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
             equip = state.items.get(state.player.armor, {}).get("equip", {})
             if equip.get("level_scaled"):
                 lvl = state.player.item_levels.get(state.player.armor, 1)
-                amount = base_amount * lvl
+                amount = min(base_amount * lvl, max(1, cap // 10))
             else:
-                amount = base_amount
+                amount = min(base_amount, max(1, cap // 10))
             gained = min(amount, cap - state.player.hp)
             if gained > 0:
                 state.player.hp += gained
@@ -439,16 +475,24 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
             if kind == "swift":
                 dmg_mult = 1.0
             if enemy.get("_marked"):
-                dmg_mult *= 1.2
-                print("(Marked! +20%)")
+                base_mult = 1.2
+                equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.weapon, 1)
+                    bonus_mult = min(1 + (base_mult - 1) * lvl, 3.0)
+                else:
+                    bonus_mult = min(base_mult, 3.0)
+                dmg_mult *= bonus_mult
+                percent_bonus = int((bonus_mult - 1) * 100)
+                print(f"(Marked! +{percent_bonus}%)")
             if kind == "berserker":
                 base_bonus = w_ability["max_bonus"]
                 equip = state.items.get(state.player.weapon, {}).get("equip", {})
                 if equip.get("level_scaled"):
                     lvl = state.player.item_levels.get(state.player.weapon, 1)
-                    max_bonus = base_bonus * lvl
+                    max_bonus = min(base_bonus * lvl, 5.0)
                 else:
-                    max_bonus = base_bonus
+                    max_bonus = min(base_bonus, 5.0)
                 missing = 1 - state.player.hp / max(1, eff_max_hp)
                 dmg_mult *= 1 + missing * max_bonus
             if kind == "execute":
@@ -470,6 +514,8 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
                 if kind == "lifesteal":
                     heal = max(1, int(dmg * w_ability["ratio"]))
                     cap = effective_max_hp(state.player, state.items)
+                    missing_hp = cap - state.player.hp
+                    heal = min(heal, max(1, missing_hp // 3))
                     actual = min(heal, cap - state.player.hp)
                     if actual > 0:
                         state.player.hp += actual
@@ -479,10 +525,8 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
                     print(f"The {enemy['name']} is chilled! (-{w_ability['amount']} PWR this round)")
                 elif kind == "burn":
                     if wtype == "magic" or not enemy.get("_burning"):
-                        enemy["_burning"] = w_ability["damage"]
-                        if not enemy.get("_burning_announced"):
-                            print(f"The {enemy['name']} is set ablaze! ({w_ability['damage']} burn/round)")
-                            enemy["_burning_announced"] = True
+                        enemy["_burning"] = {"dmg": w_ability["damage"], "ticks": 5}
+                        print(f"The {enemy['name']} is set ablaze! ({w_ability['damage']} dmg, 5 ticks)")
                 elif kind == "mark":
                     if not enemy.get("_marked"):
                         enemy["_marked"] = True
@@ -493,7 +537,7 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
                         equip = state.items.get(state.player.weapon, {}).get("equip", {})
                         if equip.get("level_scaled"):
                             lvl = state.player.item_levels.get(state.player.weapon, 1)
-                            poison_dmg = base_dmg + lvl - 1
+                            poison_dmg = min(base_dmg + lvl - 1, base_dmg * 8)
                         else:
                             poison_dmg = base_dmg
                         enemy["_poisoned"] = {"dmg": poison_dmg, "ticks": w_ability["ticks"]}
@@ -532,7 +576,8 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
                 shield_amount = base_amount * lvl
             else:
                 shield_amount = base_amount
-            reduction = min(shield_amount, max(0, taken - 1))
+            max_absorption = taken // 2
+            reduction = min(shield_amount, max_absorption)
             if reduction > 0:
                 state.player.hp += reduction
                 taken -= reduction
@@ -556,6 +601,43 @@ def _fight_enemy(state: GameState, enemy_id: str, difficulty: dict | None = None
         if state.player.hp <= 0:
             enemy["pwr"] = orig_pwr
             return "lose"
+
+        # --- second attack if player is over level 100 ---
+        if state.player.level > 100:
+            taken2 = combat.enemy_attacks(state.player, enemy, guarded=guarded)
+            if taken2 > 0 and a_ability.get("kind") == "shield":
+                base_amount = a_ability["amount"]
+                equip = state.items.get(state.player.armor, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.armor, 1)
+                    shield_amount = base_amount * lvl
+                else:
+                    shield_amount = base_amount
+                max_absorption = taken2 // 2
+                reduction = min(shield_amount, max_absorption)
+                if reduction > 0:
+                    state.player.hp += reduction
+                    taken2 -= reduction
+                    print(f"Shield absorbs {reduction}.")
+            if fortify_active and taken2 > 1:
+                reduction = taken2 // 2
+                state.player.hp += reduction
+                taken2 -= reduction
+                print(f"Fortify! Reduced by {reduction}.")
+
+            print(f"The {enemy['name']} hits you again for {taken2}.")
+
+            if taken2 > 0 and a_ability.get("kind") == "thorns":
+                thorns_dmg = a_ability["amount"]
+                enemy["hp"] -= thorns_dmg
+                print(f"Thorns deal {thorns_dmg} back to the {enemy['name']}.")
+                if enemy["hp"] <= 0:
+                    enemy["pwr"] = orig_pwr
+                    return _victory(state, enemy)
+
+            if state.player.hp <= 0:
+                enemy["pwr"] = orig_pwr
+                return "lose"
 
         enemy["pwr"] = orig_pwr
 
@@ -605,6 +687,573 @@ def dungeon_action(state: GameState) -> None:
             _apply_item_level(state.player, state.items, item_id)
         names = ", ".join(_item_display(state, i) for i in rewards)
         print(f"You find: {names}!")
+
+
+# --- labyrinth dungeon (permadeath) ----------------------------------------
+
+def labyrinth_action(state: GameState) -> str | None:
+    """Special permadeath dungeon with left/right branching and the Timeless One boss.
+    Returns 'game_over' on death, otherwise None on victory."""
+    print("\n" + "="*60)
+    print("Long before the world was forged, there existed a being of")
+    print("infinite age — The Timeless One. It watched civilizations")
+    print("rise and crumble, feeding on the entropy of all things. When")
+    print("mortals first built the Labyrinth, they unknowingly sealed it")
+    print("within, giving it a prison and a purpose: to end all who dare")
+    print("seek power beyond their station.")
+    print("="*60)
+    print("\n⚠️  WARNING: You cannot flee from the Labyrinth.")
+    print("⚠️  If you die here, your journey ends permanently. No respawn.")
+    print()
+
+    choice = engine.menu("Enter the Labyrinth?", ["Enter (no turning back)", "Leave"])
+    if choice == 1:
+        return None
+
+    left_enemies = ["labyrinth_shade", "labyrinth_wraith", "labyrinth_hunter"]
+    right_enemies = ["labyrinth_golem", "labyrinth_titan", "labyrinth_beast"]
+    difficulty = {"hp_ratio": 1.8, "pwr_ratio": 1.3}
+
+    for floor in range(1, 11):
+        print(f"\n-- Floor {floor}/10 --")
+        if floor <= 3:
+            print("The walls whisper ancient secrets. Shadows dance at the edge of sight.")
+        elif floor <= 6:
+            print("Reality begins to fracture. Time flows unevenly around you.")
+        else:
+            print("The air crackles with power. You feel The Timeless One drawing near...")
+
+        path_choice = engine.menu("Which path do you take?", ["Go Left (agile enemies)", "Go Right (heavy enemies)"])
+        if path_choice == 0:
+            enemy_list = left_enemies
+        else:
+            enemy_list = right_enemies
+        enemy_id = enemy_list[floor % 3]
+
+        result = _fight_labyrinth_enemy(state, enemy_id, difficulty=difficulty)
+        if result == "lose":
+            return "game_over"
+
+    print("\n" + "="*60)
+    print("You stand before an impossible chamber. At its center,")
+    print("a figure wreathed in shifting time itself. The Timeless One.")
+    print("="*60)
+
+    result = _fight_timeless_one(state)
+    if result == "lose":
+        return "game_over"
+
+    print("\n" + "="*60)
+    print("The Timeless One has been defeated. For the first time in")
+    print("eons, time flows forward without interruption.")
+    print("The Labyrinth begins to crumble around you.")
+    print("="*60)
+    return None
+
+
+def _fight_labyrinth_enemy(state: GameState, enemy_id: str, difficulty: dict) -> str:
+    """Fight a single labyrinth enemy. Returns 'win' or 'lose'.
+    Unlike normal fights, there is no 'flee' option and no respawn on loss."""
+    enemy = combat.spawn_dungeon_enemy(enemy_id, state.enemies, state.player, state.items, difficulty)
+    distance = "close"
+    eff_max_hp = effective_max_hp(state.player, state.items)
+
+    while True:
+        # --- start of round abilities ---
+        if enemy.get("_burning"):
+            b_info = enemy["_burning"]
+            enemy["hp"] -= b_info["dmg"]
+            b_info["ticks"] -= 1
+            print(f"The {enemy['name']} burns for {b_info['dmg']}! ({b_info['ticks']} ticks left)")
+            if b_info["ticks"] <= 0:
+                del enemy["_burning"]
+            if enemy["hp"] <= 0:
+                return "win"
+
+        if enemy.get("_poisoned"):
+            p_info = enemy["_poisoned"]
+            enemy["hp"] -= p_info["dmg"]
+            p_info["ticks"] -= 1
+            print(f"The {enemy['name']} is poisoned for {p_info['dmg']}! ({p_info['ticks']} ticks left)")
+            if p_info["ticks"] <= 0:
+                del enemy["_poisoned"]
+            if enemy["hp"] <= 0:
+                return "win"
+
+        a_ability = _slot_ability(state, "armor")
+        if a_ability.get("kind") == "regen":
+            cap = effective_max_hp(state.player, state.items)
+            base_amount = a_ability["amount"]
+            equip = state.items.get(state.player.armor, {}).get("equip", {})
+            if equip.get("level_scaled"):
+                lvl = state.player.item_levels.get(state.player.armor, 1)
+                amount = min(base_amount * lvl, max(1, cap // 10))
+            else:
+                amount = min(base_amount, max(1, cap // 10))
+            gained = min(amount, cap - state.player.hp)
+            if gained > 0:
+                state.player.hp += gained
+                print(f"You regenerate {gained} HP (HP {state.player.hp}/{cap}).")
+
+        # --- player turn ---
+        dist_label = "CLOSE" if distance == "close" else "FAR  "
+        moves = [(_attack_label(state, distance), "attack")]
+        if _consumables(state):
+            moves.append(("Use item", "use"))
+        moves.append(("Defend (brace for a weaker hit)", "defend"))
+        if _weapon_type(state) != "magic":
+            if distance == "far":
+                moves.append(("Rush in  (close the gap)", "rush_in"))
+            else:
+                moves.append(("Move back  (open the gap)", "move_back"))
+
+        choice = engine.menu(
+            f"{enemy['name']} HP {max(enemy['hp'], 0)}/{enemy['max_hp']} | "
+            f"You HP {state.player.hp}/{eff_max_hp} | {dist_label}",
+            [label for label, _ in moves],
+        )
+        move = moves[choice][1]
+
+        if move == "attack":
+            dmg_mult = 1.0
+            wtype = _weapon_type(state)
+            if wtype == "ranged":
+                if distance == "far":
+                    dmg_mult *= 0.5
+            elif wtype == "magic":
+                pass
+
+            w_ability = _slot_ability(state, "weapon")
+            kind = w_ability.get("kind")
+
+            if enemy.get("_marked"):
+                base_mult = 1.2
+                equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.weapon, 1)
+                    bonus_mult = min(1 + (base_mult - 1) * lvl, 3.0)
+                else:
+                    bonus_mult = min(base_mult, 3.0)
+                dmg_mult *= bonus_mult
+                percent_bonus = int((bonus_mult - 1) * 100)
+                print(f"(Marked! +{percent_bonus}%)")
+
+            if kind == "berserker":
+                base_bonus = w_ability["max_bonus"]
+                equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.weapon, 1)
+                    max_bonus = min(base_bonus * lvl, 5.0)
+                else:
+                    max_bonus = min(base_bonus, 5.0)
+                missing = 1 - state.player.hp / max(1, eff_max_hp)
+                dmg_mult *= 1 + missing * max_bonus
+
+            if kind == "execute":
+                base_threshold = w_ability["threshold"]
+                equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.weapon, 1)
+                    threshold = max(0.01, base_threshold - (lvl - 1) * 0.01)
+                else:
+                    threshold = base_threshold
+                if enemy["hp"] < enemy["max_hp"] * threshold:
+                    dmg_mult *= w_ability["bonus"]
+                    print("(Execute!)")
+
+            dmg = combat.player_attacks(state.player, enemy, state.items, dmg_mult)
+            print(f"You hit the {enemy['name']} for {dmg}.")
+
+            if dmg > 0 and enemy["hp"] > 0:
+                if kind == "lifesteal":
+                    heal = max(1, int(dmg * w_ability["ratio"]))
+                    cap = effective_max_hp(state.player, state.items)
+                    missing_hp = cap - state.player.hp
+                    heal = min(heal, max(1, missing_hp // 3))
+                    actual = min(heal, cap - state.player.hp)
+                    if actual > 0:
+                        state.player.hp += actual
+                        print(f"Lifesteal restores {actual} HP (HP {state.player.hp}/{cap}).")
+                elif kind == "chill":
+                    enemy["_chilled"] = w_ability["amount"]
+                    print(f"The {enemy['name']} is chilled! (-{w_ability['amount']} PWR this round)")
+                elif kind == "burn":
+                    if wtype == "magic" or not enemy.get("_burning"):
+                        enemy["_burning"] = {"dmg": w_ability["damage"], "ticks": 5}
+                        print(f"The {enemy['name']} is set ablaze! ({w_ability['damage']} dmg, 5 ticks)")
+                elif kind == "mark":
+                    if not enemy.get("_marked"):
+                        enemy["_marked"] = True
+                        print(f"The {enemy['name']} is marked!")
+                elif kind == "poison":
+                    if not enemy.get("_poisoned") or wtype == "magic":
+                        base_dmg = w_ability["damage"]
+                        equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                        if equip.get("level_scaled"):
+                            lvl = state.player.item_levels.get(state.player.weapon, 1)
+                            poison_dmg = min(base_dmg + lvl - 1, base_dmg * 8)
+                        else:
+                            poison_dmg = base_dmg
+                        enemy["_poisoned"] = {"dmg": poison_dmg, "ticks": w_ability["ticks"]}
+                        print(f"The {enemy['name']} is poisoned! ({poison_dmg} dmg, {w_ability['ticks']} ticks)")
+
+            if enemy["hp"] <= 0:
+                return "win"
+
+        elif move == "use":
+            consumables = [(iid, n) for iid, n in state.player.bag.items() if state.items.get(iid, {}).get("type") == "consumable"]
+            if not consumables:
+                print("(No consumables available)")
+                continue
+            labels = [_item_display(state, iid) for iid, _ in consumables]
+            labels.append("Cancel")
+            choice = engine.menu("Use which item?", labels)
+            if choice < len(consumables):
+                iid = consumables[choice][0]
+                result = use_item(state.player, iid, state.items)
+                if result["ok"]:
+                    print(result.get("effect", ""))
+
+        elif move == "defend":
+            pass
+
+        elif move == "rush_in":
+            distance = "close"
+            print("You rush in close!")
+
+        elif move == "move_back":
+            distance = "far"
+            print("You move back to create distance!")
+
+        # --- enemy's turn ---
+        orig_pwr = enemy["pwr"]
+        pwr_mult = 1.0
+        if _weapon_type(state) == "ranged" and distance == "far":
+            pwr_mult *= 0.5
+        chill = enemy.pop("_chilled", 0)
+        if chill:
+            pwr_mult = max(0.2, pwr_mult - chill / enemy["pwr"])
+        enemy["pwr"] = max(1, int(enemy["pwr"] * pwr_mult))
+
+        taken = combat.enemy_attacks(state.player, enemy, guarded=(move == "defend"))
+
+        if taken > 0 and a_ability.get("kind") == "shield":
+            base_amount = a_ability["amount"]
+            equip = state.items.get(state.player.armor, {}).get("equip", {})
+            if equip.get("level_scaled"):
+                lvl = state.player.item_levels.get(state.player.armor, 1)
+                shield_amount = base_amount * lvl
+            else:
+                shield_amount = base_amount
+            max_absorption = taken // 2
+            reduction = min(shield_amount, max_absorption)
+            if reduction > 0:
+                state.player.hp += reduction
+                taken -= reduction
+                print(f"Shield absorbs {reduction}.")
+
+        fortify_active = a_ability.get("kind") == "fortify" and state.player.hp < eff_max_hp * 0.3
+        if fortify_active and taken > 1:
+            reduction = taken // 2
+            state.player.hp += reduction
+            taken -= reduction
+            print(f"Fortify! Reduced by {reduction}.")
+
+        print(f"The {enemy['name']} hits you for {taken}.")
+
+        if taken > 0 and a_ability.get("kind") == "thorns":
+            thorns_dmg = a_ability["amount"]
+            enemy["hp"] -= thorns_dmg
+            print(f"Thorns deal {thorns_dmg} back to the {enemy['name']}.")
+            if enemy["hp"] <= 0:
+                enemy["pwr"] = orig_pwr
+                return "win"
+
+        if state.player.hp <= 0:
+            enemy["pwr"] = orig_pwr
+            return "lose"
+
+        enemy["pwr"] = orig_pwr
+
+
+def _fight_timeless_one(state: GameState) -> str:
+    """Fight The Timeless One boss with 5 revivals (6 total phases).
+    Returns 'win' or 'lose'."""
+    enemy = combat.spawn_dungeon_enemy("timeless_one", state.enemies, state.player, state.items, {"hp_ratio": 3.0, "pwr_ratio": 2.0})
+    original_max_hp = enemy["max_hp"]
+    original_pwr = enemy["pwr"]
+    phase = 0
+    max_phases = 5
+    distance = "close"
+    eff_max_hp = effective_max_hp(state.player, state.items)
+
+    revival_lore = [
+        "The Timeless One rises! 'I have died a thousand times and returned a thousand more. You are merely the latest disappointment.'",
+        "Time rewinds around The Timeless One! 'Do you not see? Every wound you deal me, I have already healed in another era.'",
+        "Reality tears as The Timeless One is reborn! 'I remember the fall of your ancestors. They also thought themselves worthy.'",
+        "The Timeless One howls through dimensions! 'ENOUGH. I will end this age as I ended all ages before it.'",
+        "The Timeless One tears apart time itself! 'THIS IS MY FINAL FORM. DIE AS ALL THINGS DIE. BY MY HAND.'"
+    ]
+
+    while True:
+        # --- start of round abilities (identical to labyrinth enemy) ---
+        if enemy.get("_burning"):
+            b_info = enemy["_burning"]
+            enemy["hp"] -= b_info["dmg"]
+            b_info["ticks"] -= 1
+            if b_info["ticks"] <= 0:
+                del enemy["_burning"]
+            if enemy["hp"] <= 0:
+                if phase < max_phases:
+                    phase += 1
+                    print(f"\n{revival_lore[phase - 1]}\n")
+                    new_hp = int(original_max_hp * (1 + phase * 0.4))
+                    new_pwr = int(original_pwr * (1 + phase * 0.25))
+                    enemy["hp"] = new_hp
+                    enemy["max_hp"] = new_hp
+                    enemy["pwr"] = new_pwr
+                    enemy.pop("_burning", None)
+                    enemy.pop("_poisoned", None)
+                    enemy.pop("_marked", None)
+                    enemy.pop("_chilled", None)
+                    print(f"The Timeless One has grown stronger! (Phase {phase}/5)")
+                    continue
+                else:
+                    return "win"
+
+        if enemy.get("_poisoned"):
+            p_info = enemy["_poisoned"]
+            enemy["hp"] -= p_info["dmg"]
+            p_info["ticks"] -= 1
+            if p_info["ticks"] <= 0:
+                del enemy["_poisoned"]
+            if enemy["hp"] <= 0:
+                if phase < max_phases:
+                    phase += 1
+                    print(f"\n{revival_lore[phase - 1]}\n")
+                    new_hp = int(original_max_hp * (1 + phase * 0.4))
+                    new_pwr = int(original_pwr * (1 + phase * 0.25))
+                    enemy["hp"] = new_hp
+                    enemy["max_hp"] = new_hp
+                    enemy["pwr"] = new_pwr
+                    enemy.pop("_burning", None)
+                    enemy.pop("_poisoned", None)
+                    enemy.pop("_marked", None)
+                    enemy.pop("_chilled", None)
+                    print(f"The Timeless One has grown stronger! (Phase {phase}/5)")
+                    continue
+                else:
+                    return "win"
+
+        a_ability = _slot_ability(state, "armor")
+        if a_ability.get("kind") == "regen":
+            cap = effective_max_hp(state.player, state.items)
+            base_amount = a_ability["amount"]
+            equip = state.items.get(state.player.armor, {}).get("equip", {})
+            if equip.get("level_scaled"):
+                lvl = state.player.item_levels.get(state.player.armor, 1)
+                amount = min(base_amount * lvl, max(1, cap // 10))
+            else:
+                amount = min(base_amount, max(1, cap // 10))
+            gained = min(amount, cap - state.player.hp)
+            if gained > 0:
+                state.player.hp += gained
+
+        # --- player turn (no flee option) ---
+        dist_label = "CLOSE" if distance == "close" else "FAR  "
+        moves = [(_attack_label(state, distance), "attack")]
+        if _consumables(state):
+            moves.append(("Use item", "use"))
+        moves.append(("Defend (brace for a weaker hit)", "defend"))
+        if _weapon_type(state) != "magic":
+            if distance == "far":
+                moves.append(("Rush in  (close the gap)", "rush_in"))
+            else:
+                moves.append(("Move back  (open the gap)", "move_back"))
+
+        choice = engine.menu(
+            f"The Timeless One HP {max(enemy['hp'], 0)}/{enemy['max_hp']} (Phase {phase + 1}/6) | "
+            f"You HP {state.player.hp}/{eff_max_hp} | {dist_label}",
+            [label for label, _ in moves],
+        )
+        move = moves[choice][1]
+
+        if move == "attack":
+            dmg_mult = 1.0
+            wtype = _weapon_type(state)
+            if wtype == "ranged":
+                if distance == "far":
+                    dmg_mult *= 0.5
+
+            w_ability = _slot_ability(state, "weapon")
+            kind = w_ability.get("kind")
+
+            if enemy.get("_marked"):
+                base_mult = 1.2
+                equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.weapon, 1)
+                    bonus_mult = min(1 + (base_mult - 1) * lvl, 3.0)
+                else:
+                    bonus_mult = min(base_mult, 3.0)
+                dmg_mult *= bonus_mult
+
+            if kind == "berserker":
+                base_bonus = w_ability["max_bonus"]
+                equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.weapon, 1)
+                    max_bonus = min(base_bonus * lvl, 5.0)
+                else:
+                    max_bonus = min(base_bonus, 5.0)
+                missing = 1 - state.player.hp / max(1, eff_max_hp)
+                dmg_mult *= 1 + missing * max_bonus
+
+            if kind == "execute":
+                base_threshold = w_ability["threshold"]
+                equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                if equip.get("level_scaled"):
+                    lvl = state.player.item_levels.get(state.player.weapon, 1)
+                    threshold = max(0.01, base_threshold - (lvl - 1) * 0.01)
+                else:
+                    threshold = base_threshold
+                if enemy["hp"] < enemy["max_hp"] * threshold:
+                    dmg_mult *= w_ability["bonus"]
+
+            dmg = combat.player_attacks(state.player, enemy, state.items, dmg_mult)
+            print(f"You hit The Timeless One for {dmg}.")
+
+            if dmg > 0 and enemy["hp"] > 0:
+                if kind == "lifesteal":
+                    heal = max(1, int(dmg * w_ability["ratio"]))
+                    cap = effective_max_hp(state.player, state.items)
+                    missing_hp = cap - state.player.hp
+                    heal = min(heal, max(1, missing_hp // 3))
+                    actual = min(heal, cap - state.player.hp)
+                    if actual > 0:
+                        state.player.hp += actual
+                elif kind == "chill":
+                    enemy["_chilled"] = w_ability["amount"]
+                elif kind == "burn":
+                    if wtype == "magic" or not enemy.get("_burning"):
+                        enemy["_burning"] = {"dmg": w_ability["damage"], "ticks": 5}
+                elif kind == "mark":
+                    if not enemy.get("_marked"):
+                        enemy["_marked"] = True
+                elif kind == "poison":
+                    if not enemy.get("_poisoned") or wtype == "magic":
+                        base_dmg = w_ability["damage"]
+                        equip = state.items.get(state.player.weapon, {}).get("equip", {})
+                        if equip.get("level_scaled"):
+                            lvl = state.player.item_levels.get(state.player.weapon, 1)
+                            poison_dmg = min(base_dmg + lvl - 1, base_dmg * 8)
+                        else:
+                            poison_dmg = base_dmg
+                        enemy["_poisoned"] = {"dmg": poison_dmg, "ticks": w_ability["ticks"]}
+
+            if enemy["hp"] <= 0:
+                if phase < max_phases:
+                    phase += 1
+                    print(f"\n{revival_lore[phase - 1]}\n")
+                    new_hp = int(original_max_hp * (1 + phase * 0.4))
+                    new_pwr = int(original_pwr * (1 + phase * 0.25))
+                    enemy["hp"] = new_hp
+                    enemy["max_hp"] = new_hp
+                    enemy["pwr"] = new_pwr
+                    enemy.pop("_burning", None)
+                    enemy.pop("_poisoned", None)
+                    enemy.pop("_marked", None)
+                    enemy.pop("_chilled", None)
+                    print(f"The Timeless One has grown stronger! (Phase {phase}/5)")
+                    continue
+                else:
+                    return "win"
+
+        elif move == "use":
+            consumables = [(iid, n) for iid, n in state.player.bag.items() if state.items.get(iid, {}).get("type") == "consumable"]
+            if not consumables:
+                print("(No consumables available)")
+                continue
+            labels = [_item_display(state, iid) for iid, _ in consumables]
+            labels.append("Cancel")
+            choice = engine.menu("Use which item?", labels)
+            if choice < len(consumables):
+                iid = consumables[choice][0]
+                use_item(state.player, iid, state.items)
+
+        elif move == "defend":
+            pass
+
+        elif move == "rush_in":
+            distance = "close"
+            print("You rush in close!")
+
+        elif move == "move_back":
+            distance = "far"
+            print("You move back to create distance!")
+
+        # --- enemy's turn ---
+        orig_pwr = enemy["pwr"]
+        pwr_mult = 1.0
+        if _weapon_type(state) == "ranged" and distance == "far":
+            pwr_mult *= 0.5
+        chill = enemy.pop("_chilled", 0)
+        if chill:
+            pwr_mult = max(0.2, pwr_mult - chill / enemy["pwr"])
+        enemy["pwr"] = max(1, int(enemy["pwr"] * pwr_mult))
+
+        taken = combat.enemy_attacks(state.player, enemy, guarded=(move == "defend"))
+
+        if taken > 0 and a_ability.get("kind") == "shield":
+            base_amount = a_ability["amount"]
+            equip = state.items.get(state.player.armor, {}).get("equip", {})
+            if equip.get("level_scaled"):
+                lvl = state.player.item_levels.get(state.player.armor, 1)
+                shield_amount = base_amount * lvl
+            else:
+                shield_amount = base_amount
+            max_absorption = taken // 2
+            reduction = min(shield_amount, max_absorption)
+            if reduction > 0:
+                state.player.hp += reduction
+                taken -= reduction
+
+        fortify_active = a_ability.get("kind") == "fortify" and state.player.hp < eff_max_hp * 0.3
+        if fortify_active and taken > 1:
+            reduction = taken // 2
+            state.player.hp += reduction
+            taken -= reduction
+
+        print(f"The Timeless One hits you for {taken}.")
+
+        if taken > 0 and a_ability.get("kind") == "thorns":
+            thorns_dmg = a_ability["amount"]
+            enemy["hp"] -= thorns_dmg
+            if enemy["hp"] <= 0:
+                if phase < max_phases:
+                    phase += 1
+                    print(f"\n{revival_lore[phase - 1]}\n")
+                    new_hp = int(original_max_hp * (1 + phase * 0.4))
+                    new_pwr = int(original_pwr * (1 + phase * 0.25))
+                    enemy["hp"] = new_hp
+                    enemy["max_hp"] = new_hp
+                    enemy["pwr"] = new_pwr
+                    enemy.pop("_burning", None)
+                    enemy.pop("_poisoned", None)
+                    enemy.pop("_marked", None)
+                    enemy.pop("_chilled", None)
+                    print(f"The Timeless One has grown stronger! (Phase {phase}/5)")
+                    enemy["pwr"] = orig_pwr
+                    continue
+                else:
+                    enemy["pwr"] = orig_pwr
+                    return "win"
+
+        if state.player.hp <= 0:
+            enemy["pwr"] = orig_pwr
+            return "lose"
+
+        enemy["pwr"] = orig_pwr
 
 
 # --- crafting --------------------------------------------------------------

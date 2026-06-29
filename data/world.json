@@ -70,6 +70,14 @@
         {"kind": "item", "id": "shadow_essence", "min": 0, "max": 1},
         {"kind": "item", "id": "bone",           "min": 1, "max": 2}
       ]
+    },
+    "labyrinth": {
+      "name": "The Labyrinth",
+      "description": "An impossible structure that should not exist. Time itself seems to bend within its corridors.",
+      "min_level": 10,
+      "dungeon": "labyrinth",
+      "enemies": [],
+      "gather": []
     }
   }
 }
